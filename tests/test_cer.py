@@ -19,3 +19,7 @@ def test_cer_counts_character_errors():
 
 def test_cer_is_corpus_level_over_lists():
     assert khmer_cer(["ab", "cd"], ["ab", "cx"]) == 0.25
+
+
+def test_cer_treats_digits_and_spoken_numbers_as_equal():
+    assert khmer_cer("ឆ្នាំ 1998", "ឆ្នាំ មួយពាន់ប្រាំបួនរយកៅសិបប្រាំបី") == 0.0

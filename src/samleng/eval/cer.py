@@ -3,13 +3,17 @@ import unicodedata
 
 import jiwer
 
+from samleng.text import verbalize
+
 # Khmer khan, bariyoosan, colon and other sentence marks; ៗ (repetition) is kept.
 _KHMER_PUNCT = "។៕៖៘៙៚"
 _DROP = set(_KHMER_PUNCT + string.punctuation + "«»“”‘’…")
 
 
-def normalize_khmer(text: str) -> str:
+def normalize_khmer(text: str, spell_numbers: bool = True) -> str:
     text = unicodedata.normalize("NFC", text)
+    if spell_numbers:
+        text = verbalize(text)
     return "".join(
         ch
         for ch in text
