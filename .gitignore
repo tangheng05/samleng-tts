@@ -1,0 +1,30 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Large or generated files
+data/
+outputs/
+checkpoints/
+*.wav
+*.flac
+*.mp3
+*.safetensors
+*.ckpt
+*.pt
+
+.env
+.DS_Store
+
+# Local-only planning and assistant files
+ROADMAP.md
+CLAUDE.md
+CLAUDE.local.md
+.claude/
