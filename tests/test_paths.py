@@ -1,4 +1,4 @@
-from khmer_voice.paths import DATA_DIR, OUTPUT_DIR, ROOT
+from samleng.paths import DATA_DIR, OUTPUT_DIR, ROOT
 
 
 def test_default_paths_live_under_repo():
