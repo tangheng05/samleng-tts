@@ -15,7 +15,6 @@ dependencies = [
     "pandas>=3.1.1",
     "soundfile>=0.14.0",
     "torch>=2.15.0",
-    "torchaudio>=2.11.1",
     "transformers>=5.22.1",
 ]
 
@@ -31,3 +30,7 @@ dev = [
 
 [tool.uv.build-backend]
 module-name = "samleng"
+
+[tool.uv.workspace]
+# Model runners pin conflicting deps, so each keeps its own env and lockfile.
+exclude = ["runners/*"]

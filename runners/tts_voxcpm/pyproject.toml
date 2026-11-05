@@ -1,0 +1,8 @@
+[project]
+name = "samleng-runner-tts-voxcpm"
+version = "0.1.0"
+requires-python = "==3.11.*"
+dependencies = [
+    "soundfile>=0.14.0",
+    "voxcpm>=2.0.3",
+]

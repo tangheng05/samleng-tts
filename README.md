@@ -1,6 +1,6 @@
-# Samleng-TTS (សំឡេង)
+# Samleng-TTS
 
-Real-time, native-sounding Khmer text-to-speech that runs on a Mac mini, plus an open benchmark for Khmer TTS with human ratings. *Samleng* (សំឡេង) means "voice" in Khmer.
+Real-time, native-sounding Khmer text-to-speech that runs on a Mac mini, plus an open benchmark for Khmer TTS with human ratings. *Samleng* means "voice" in Khmer.
 
 > Status: **Phase 0 — foundations + baseline.**
 
@@ -32,15 +32,9 @@ src/samleng/       library code (eval harness, data pipeline, models)
 scripts/           runnable entry points
 bench/             benchmark sentences and metadata
 docs/              write-ups and results
+runners/           isolated envs for models with conflicting deps
 tests/
 ```
-
-## Built on
-
-- [Tha](https://github.com/seanghay/tha) — Khmer text normalization
-- [Qwen3-ASR-0.6B-Khmer](https://huggingface.co/seanghay/Qwen3-ASR-0.6B-Khmer) — Khmer ASR for intelligibility scoring
-- [VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) — teacher model
-- [MMS-TTS Khmer](https://huggingface.co/facebook/mms-tts-khm) — baseline
 
 ## Ethics
 
