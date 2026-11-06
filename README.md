@@ -1,6 +1,6 @@
 # Samleng-TTS
 
-Real-time, native-sounding Khmer text-to-speech that runs on a Mac mini, plus an open benchmark for Khmer TTS with human ratings. *Samleng* means "voice" in Khmer.
+Real-time, native-sounding Khmer text-to-speech that runs on everyday hardware, plus an open benchmark for Khmer TTS with human ratings. *Samleng* means "voice" in Khmer.
 
 > Status: **Phase 0 — foundations + baseline.**
 
@@ -23,7 +23,7 @@ cp .env.example .env
 uv run pytest
 ```
 
-Development happens on a MacBook Pro M4; training and evals run on a Mac mini M4 (16GB). Set `SAMLENG_DATA` / `SAMLENG_OUTPUT` in `.env` to point at external storage on the training machine.
+Set `SAMLENG_DATA` / `SAMLENG_OUTPUT` in `.env` to keep data and outputs somewhere else, such as an external drive.
 
 ## Human ratings (MOS)
 

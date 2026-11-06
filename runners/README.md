@@ -8,6 +8,7 @@ Contract: a runner reads a JSONL manifest and writes a JSONL of results. The mai
 |---|---|---|
 | `asr_qwen` | Qwen3-ASR-0.6B-Khmer | `transformers==4.57.6` |
 | `tts_voxcpm` | VoxCPM2 | `datasets<4`, Python <3.13 |
+| `mos_utmos` | UTMOSv2 (predicted naturalness) | git commit `cc2700d`, weights at a fixed HF revision |
 
 ```bash
 cd runners/asr_qwen
