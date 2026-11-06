@@ -7,6 +7,8 @@ uv run python scripts/mos.py report --study mixed_v0 \
 """
 
 import argparse
+import functools
+import io
 import json
 import threading
 import webbrowser
@@ -15,6 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
+import soundfile as sf
 
 from samleng.bench import load_bench
 from samleng.mos import (
@@ -24,20 +27,36 @@ from samleng.mos import (
     compare,
     load_ratings,
     merge_systems,
+    normalize_loudness,
     order_for,
     summarize,
 )
 from samleng.paths import OUTPUT_DIR, ROOT
 
 DEFAULT_SYSTEMS = {
-    "mms": "baseline/pilot_v0/mms",
-    "voxcpm2": "baseline/pilot_v0/voxcpm2",
+    "mms": "baseline/pilot_v1/mms",
+    "voxcpm2": "baseline/pilot_v1/voxcpm2",
 }
 PROTOCOL = """\
 - Scale: 1-5 absolute category rating with ITU-T P.800 labels (Bad, Poor, Fair, Good, Excellent).
 - MOS is the mean of per-sentence means; ci95 is a t-interval over sentences.
 - p is a paired Wilcoxon signed-rank test over the sentences both systems share.
+- Clips are loudness-normalized to -26 dB active speech level; native sample rates kept.
 - MOS values are only comparable within this study."""
+
+
+@functools.cache
+def leveled_wav(path):
+    y, sr = sf.read(path, always_2d=False)
+    buf = io.BytesIO()
+    sf.write(
+        buf,
+        normalize_loudness(y if y.ndim == 1 else y.mean(axis=1), sr),
+        sr,
+        format="WAV",
+        subtype="PCM_16",
+    )
+    return buf.getvalue()
 
 
 def make_handler(clips, ratings_path):
@@ -75,7 +94,7 @@ def make_handler(clips, ratings_path):
                 self.send_json({"clips": order, "rated": rated})
             elif url.path.startswith("/audio/") and url.path[7:] in by_id:
                 self.send(
-                    HTTPStatus.OK, by_id[url.path[7:]].audio.read_bytes(), "audio/wav"
+                    HTTPStatus.OK, leveled_wav(by_id[url.path[7:]].audio), "audio/wav"
                 )
             else:
                 self.send(HTTPStatus.NOT_FOUND)
@@ -123,7 +142,8 @@ def write_report(study, ratings, groups):
     ]
     pairs = compare(ratings)
     if pairs:
-        lines += ["", "## Pairwise", "", pd.DataFrame(pairs).to_markdown(index=False)]
+        table = pd.DataFrame(pairs).assign(p=lambda d: d["p"].map("{:.2g}".format))
+        lines += ["", "## Pairwise", "", table.to_markdown(index=False)]
     text = "\n".join(lines) + "\n"
     print(text)
     (study / "summary.md").write_text(text, encoding="utf-8")
@@ -145,7 +165,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     serve = sub.add_parser("serve", help="open the rating page")
-    serve.add_argument("--bench", default=str(ROOT / "bench" / "pilot_v0.jsonl"))
+    serve.add_argument("--bench", default=str(ROOT / "bench" / "pilot_v1.jsonl"))
     serve.add_argument("--category", default="mixed")
     serve.add_argument(
         "--system",
@@ -163,7 +183,7 @@ def main() -> None:
         help="pool systems, e.g. two takes of the same voice",
     )
     for p in (serve, report):
-        p.add_argument("--study", default="mixed_v1")
+        p.add_argument("--study", default="mixed_v2")
     args = ap.parse_args()
 
     study = OUTPUT_DIR / "mos" / args.study

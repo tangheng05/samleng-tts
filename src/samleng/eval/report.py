@@ -34,4 +34,6 @@ def _row(system: str, category: str, g: pd.DataFrame) -> dict:
         "median_cer_%": round(100 * float(pd.Series(per_item).median()), 1),
         "asr_loops": sum(is_asr_loop(r, h) for r, h in zip(refs, hyps, strict=True)),
         "rtf": round(g["gen_seconds"].sum() / g["seconds"].sum(), 2),
+        # Robust to slow clips when the machine is busy.
+        "median_rtf": round(float((g["gen_seconds"] / g["seconds"]).median()), 2),
     }

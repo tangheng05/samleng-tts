@@ -111,3 +111,32 @@ def test_merge_systems():
     )
     assert [m["system"] for m in merged] == ["a", "a", "b"]
     assert summarize(merged)[0]["mos"] == 3.0
+
+
+def _active_db(y):
+    import numpy as np
+
+    return 20 * np.log10(np.sqrt(np.mean(y[np.abs(y) > 0] ** 2)))
+
+
+def test_normalize_loudness_hits_target():
+    import numpy as np
+
+    from samleng.mos import normalize_loudness
+
+    sr = 16000
+    tone = 0.02 * np.sin(2 * np.pi * 220 * np.arange(sr) / sr)
+    y = np.concatenate([np.zeros(sr), tone, np.zeros(sr)])
+    out = normalize_loudness(y, sr, target_db=-26.0)
+    assert _active_db(out[sr : 2 * sr]) == pytest.approx(-26.0, abs=0.5)
+
+
+def test_normalize_loudness_never_clips():
+    import numpy as np
+
+    from samleng.mos import normalize_loudness
+
+    sr = 16000
+    y = np.full(sr, 0.001)
+    y[100] = 0.9
+    assert np.abs(normalize_loudness(y, sr, target_db=-10.0)).max() <= 0.99

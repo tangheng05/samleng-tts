@@ -19,6 +19,7 @@ def test_summarize_per_category_and_overall():
     assert s.loc["mixed", "cer_%"] == 50.0
     assert s.loc["ALL", "cer_%"] == 25.0
     assert s.loc["ALL", "rtf"] == 0.5
+    assert s.loc["ALL", "median_rtf"] == 0.5
 
 
 def test_asr_loop_is_flagged():
