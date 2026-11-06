@@ -4,6 +4,7 @@ uv run python scripts/baseline.py bench/pilot_v0.jsonl
 """
 
 import argparse
+from dataclasses import replace
 from pathlib import Path
 
 import pandas as pd
@@ -12,6 +13,7 @@ from samleng.bench import load_bench
 from samleng.eval.report import summarize
 from samleng.paths import OUTPUT_DIR
 from samleng.runners import read_jsonl, run, write_jsonl
+from samleng.text import verbalize
 from samleng.tts import mms
 
 SYSTEMS = ("mms", "voxcpm2")
@@ -21,18 +23,32 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("bench")
     ap.add_argument("--systems", nargs="+", default=list(SYSTEMS), choices=SYSTEMS)
+    ap.add_argument("--category", help="only run one category")
+    ap.add_argument(
+        "--verbalize", action="store_true", help="spell out numbers before TTS"
+    )
     args = ap.parse_args()
 
     items = load_bench(args.bench)
-    out = OUTPUT_DIR / "baseline" / Path(args.bench).stem
+    if args.category:
+        items = [it for it in items if it.category == args.category]
     by_id = {it.id: it for it in items}
+    tts_items = (
+        [replace(it, text=verbalize(it.text)) for it in items]
+        if args.verbalize
+        else items
+    )
+    run_name = Path(args.bench).stem + (f"_{args.category}" if args.category else "")
+    out = (
+        OUTPUT_DIR / "baseline" / (run_name + ("_verbalized" if args.verbalize else ""))
+    )
 
     audio: dict[str, list[dict]] = {}
     if "mms" in args.systems:
-        audio["mms"] = mms.synthesize(items, out / "mms")
+        audio["mms"] = mms.synthesize(tts_items, out / "mms")
     if "voxcpm2" in args.systems:
         manifest = out / "voxcpm2_in.jsonl"
-        write_jsonl(manifest, [{"id": it.id, "text": it.text} for it in items])
+        write_jsonl(manifest, [{"id": it.id, "text": it.text} for it in tts_items])
         run("tts_voxcpm", "synthesize.py", manifest, out / "voxcpm2")
         audio["voxcpm2"] = read_jsonl(out / "voxcpm2" / "results.jsonl")
 
