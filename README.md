@@ -25,6 +25,10 @@ uv run pytest
 
 Development happens on a MacBook Pro M4; training and evals run on a Mac mini M4 (16GB). Set `SAMLENG_DATA` / `SAMLENG_OUTPUT` in `.env` to point at external storage on the training machine.
 
+## Human ratings (MOS)
+
+`uv run python scripts/mos.py serve` opens a local page for blind 1–5 listening scores; `uv run python scripts/mos.py report` gives MOS per system (CI over sentences) and paired Wilcoxon tests.
+
 ## Layout
 
 ```

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Samleng listening test</title>
+<style>
+  :root {
+    --paper: #ECEFE8;
+    --surface: #F6F8F3;
+    --ink: #1C2A2E;
+    --muted: #5D6B69;
+    --line: #C9D0C6;
+    --wave: #A9B4AE;
+    --played: #2E6B58;
+    --gilt: #B8901F;
+    --ui: "Avenir Next", Avenir, system-ui, sans-serif;
+    --khmer: "Khmer Sangam MN", "Noto Sans Khmer", "Khmer MN", var(--ui);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #162024;
+      --surface: #1D292E;
+      --ink: #E4E9E2;
+      --muted: #97A5A1;
+      --line: #33434A;
+      --wave: #4A5C60;
+      --played: #6FB59C;
+      --gilt: #E0BD4E;
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 17px/1.5 var(--ui);
+    -webkit-font-smoothing: antialiased;
+  }
+  main {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 3.5rem 1.5rem 3rem;
+  }
+  [hidden] { display: none !important; }
+  h1 {
+    font-weight: 600;
+    font-size: 1.75rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.75rem;
+  }
+  p { margin: 0 0 1rem; max-width: 36rem; }
+  .muted { color: var(--muted); }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--gilt); outline-offset: 3px; }
+  kbd {
+    font: 500 0.8em var(--ui);
+    padding: 0.05em 0.45em;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: var(--surface);
+  }
+
+  .primary {
+    border: 0;
+    border-radius: 999px;
+    padding: 0.75rem 1.6rem;
+    background: var(--ink);
+    color: var(--paper);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .primary:disabled { opacity: 0.4; cursor: default; }
+  .link {
+    border: 0;
+    background: none;
+    padding: 0;
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+  .link:disabled { opacity: 0.4; cursor: default; text-decoration: none; }
+
+  /* Start */
+  .scale {
+    list-style: none;
+    padding: 0;
+    margin: 1.75rem 0 2rem;
+    border-top: 1px solid var(--line);
+  }
+  .scale li {
+    display: grid;
+    grid-template-columns: 2rem 7rem 1fr;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .scale b { font-size: 1.15rem; }
+  .scale .km { display: block; font-family: var(--khmer); font-size: 0.9rem; color: var(--muted); }
+  label { display: block; font-weight: 600; margin-bottom: 0.4rem; }
+  .name-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .name-row input {
+    flex: 1 1 14rem;
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+  }
+
+  /* Rating */
+  .ticks {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 3px;
+    height: 10px;
+    margin-bottom: 0.6rem;
+  }
+  .ticks span { border-radius: 2px; background: var(--line); }
+  .ticks span.done { background: var(--muted); }
+  .ticks span.now { background: var(--gilt); }
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 3rem;
+  }
+  .sentence {
+    font-family: var(--khmer);
+    font-size: clamp(1.6rem, 4.5vw, 2.3rem);
+    line-height: 1.75;
+    margin: 0 0 2.25rem;
+    max-width: none;
+    overflow-wrap: anywhere;
+  }
+
+  .player {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 2.75rem;
+  }
+  .play {
+    flex: none;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    border: 0;
+    background: var(--played);
+    color: var(--paper);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .play svg { width: 1.4rem; height: 1.4rem; fill: currentColor; }
+  .play .pause, .play.playing .tri { display: none; }
+  .play.playing .pause { display: block; }
+  canvas {
+    flex: 1;
+    min-width: 0;
+    height: 72px;
+    cursor: pointer;
+  }
+
+  .scores {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.6rem;
+    border: 0;
+    padding: 0;
+    margin: 0 0 1.25rem;
+  }
+  .scores legend { padding: 0; margin-bottom: 0.75rem; color: var(--muted); }
+  .score {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+    padding: 0.8rem 0.9rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 120ms, background-color 120ms, color 120ms;
+  }
+  .score .n { font-size: 1.6rem; font-weight: 600; line-height: 1.1; }
+  .score .en { font-size: 0.9rem; }
+  .score .km { font-family: var(--khmer); font-size: 0.85rem; color: var(--muted); }
+  .score:hover:not(:disabled) { border-color: var(--ink); }
+  .score:disabled { opacity: 0.4; cursor: default; }
+  .score[aria-pressed="true"] {
+    background: var(--gilt);
+    border-color: var(--gilt);
+    color: #1C2A2E;
+  }
+  .score[aria-pressed="true"] .km { color: #1C2A2E; }
+  .status { min-height: 1.5rem; color: var(--muted); font-size: 0.9rem; }
+  .status.error { color: #B3412E; }
+  @media (prefers-color-scheme: dark) { .status.error { color: #F08A73; } }
+
+  footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 560px) {
+    main { padding-top: 2rem; }
+    .meta { margin-bottom: 2rem; }
+    .scores { grid-template-columns: 1fr; }
+    .score {
+      flex-direction: row;
+      align-items: baseline;
+      gap: 0.75rem;
+      padding: 0.7rem 1rem;
+    }
+    .score .n { font-size: 1.25rem; width: 1.25rem; }
+    .scale li { grid-template-columns: 1.5rem 5.5rem 1fr; }
+    .keys { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .score { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <section id="start">
+    <h1>How natural does each voice sound?</h1>
+    <p>You'll hear Khmer sentences that mix in English words. Listen to each clip to the end, then score how natural it sounds to you as a Khmer speaker: pronunciation of both languages, rhythm, and clarity.</p>
+    <p class="muted">The clips come from different voices in random order. Score each one on its own, by what you hear. Don't try to guess which voice it is.</p>
+    <ol class="scale" reversed>
+      <li><b>5</b><span>Excellent<span class="km" lang="km">ល្អណាស់</span></span><span class="muted">Could be a native speaker</span></li>
+      <li><b>4</b><span>Good<span class="km" lang="km">ល្អ</span></span><span class="muted">Every word is there, with only small slips</span></li>
+      <li><b>3</b><span>Fair<span class="km" lang="km">មធ្យម</span></span><span class="muted">Every word is there, but it sounds robotic or strongly accented</span></li>
+      <li><b>2</b><span>Poor<span class="km" lang="km">ខ្សោយ</span></span><span class="muted">A word is skipped or garbled, so the meaning is lost</span></li>
+      <li><b>1</b><span>Bad<span class="km" lang="km">អាក្រក់</span></span><span class="muted">Most of the sentence is wrong or can't be understood</span></li>
+    </ol>
+    <form id="start-form">
+      <label for="rater">Your name</label>
+      <div class="name-row">
+        <input id="rater" autocomplete="nickname" required placeholder="Used only to keep your scores apart">
+        <button class="primary" type="submit">Start listening</button>
+      </div>
+      <p class="status" id="start-status" role="status"></p>
+    </form>
+  </section>
+
+  <section id="rate" hidden>
+    <div class="ticks" id="ticks" aria-hidden="true"></div>
+    <div class="meta"><span id="count"></span><span id="who"></span></div>
+
+    <p class="sentence" id="sentence" lang="km"></p>
+
+    <div class="player">
+      <button class="play" id="play" type="button" aria-label="Play clip">
+        <svg class="tri" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg>
+        <svg class="pause" viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg>
+      </button>
+      <canvas id="wave" aria-hidden="true"></canvas>
+    </div>
+
+    <fieldset class="scores" id="scores">
+      <legend id="legend">Listen to the whole clip to unlock scoring.</legend>
+    </fieldset>
+    <p class="status" id="status" role="status"></p>
+
+    <footer>
+      <button class="link" id="back" type="button">Previous clip</button>
+      <span class="keys"><kbd>Space</kbd> play &nbsp; <kbd>1</kbd>–<kbd>5</kbd> score &nbsp; <kbd>←</kbd> previous</span>
+      <button class="link" id="switch" type="button">Switch rater</button>
+    </footer>
+  </section>
+
+  <section id="done" hidden>
+    <h1>All clips scored</h1>
+    <p id="done-text"></p>
+    <p class="muted">Your scores are saved. You can close this tab.</p>
+    <button class="link" id="review" type="button">Go back to the last clip</button>
+  </section>
+</main>
+
+<script>
+const SCALE = [
+  [1, "Bad", "អាក្រក់", "Most of the sentence is wrong or can't be understood"],
+  [2, "Poor", "ខ្សោយ", "A word is skipped or garbled, so the meaning is lost"],
+  [3, "Fair", "មធ្យម", "Every word is there, but it sounds robotic or strongly accented"],
+  [4, "Good", "ល្អ", "Every word is there, with only small slips"],
+  [5, "Excellent", "ល្អណាស់", "Could be a native speaker"],
+];
+const $ = (id) => document.getElementById(id);
+const audio = new Audio();
+const cache = new Map();
+let rater = "", clips = [], rated = {}, idx = 0, unlocked = false, peaks = [], busy = false;
+
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+function show(section) {
+  for (const id of ["start", "rate", "done"]) $(id).hidden = id !== section;
+}
+
+function buildScores() {
+  for (const [n, en, km, hint] of SCALE) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.title = hint;
+    b.className = "score";
+    b.dataset.score = n;
+    b.setAttribute("aria-pressed", "false");
+    b.innerHTML = `<span class="n">${n}</span><span class="en">${en}</span><span class="km" lang="km">${km}</span>`;
+    b.addEventListener("click", () => rate(n));
+    $("scores").appendChild(b);
+  }
+}
+
+function setStatus(el, msg, error = false) {
+  el.textContent = msg;
+  el.classList.toggle("error", error);
+}
+
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.statusText);
+  return res.json();
+}
+
+function loadClip(c) {
+  if (!cache.has(c.clip)) {
+    cache.set(c.clip, fetch(`/audio/${c.clip}`).then(async (res) => {
+      if (!res.ok) throw new Error("audio missing");
+      const blob = await res.blob();
+      const ctx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 1, 16000);
+      const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+      return { url: URL.createObjectURL(blob), peaks: computePeaks(buf.getChannelData(0), 160) };
+    }));
+  }
+  return cache.get(c.clip);
+}
+
+function computePeaks(data, bins) {
+  const size = Math.max(1, Math.floor(data.length / bins));
+  const out = [];
+  for (let i = 0; i < bins; i++) {
+    let max = 0;
+    for (let j = i * size; j < Math.min((i + 1) * size, data.length); j++) max = Math.max(max, Math.abs(data[j]));
+    out.push(max);
+  }
+  const top = Math.max(...out, 1e-6);
+  return out.map((v) => v / top);
+}
+
+function drawWave() {
+  const cv = $("wave");
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  cv.width = w * dpr;
+  cv.height = h * dpr;
+  const g = cv.getContext("2d");
+  g.scale(dpr, dpr);
+  const n = peaks.length || 1;
+  const step = w / n, bar = Math.max(1, step * 0.6);
+  const progress = audio.duration ? audio.currentTime / audio.duration : 0;
+  const wave = css("--wave"), played = css("--played");
+  for (let i = 0; i < n; i++) {
+    const v = Math.max(0.04, peaks[i] || 0);
+    const bh = v * (h - 4);
+    g.fillStyle = (i + 0.5) / n <= progress ? played : wave;
+    g.beginPath();
+    g.roundRect(i * step, (h - bh) / 2, bar, bh, bar / 2);
+    g.fill();
+  }
+}
+
+function tick() {
+  drawWave();
+  if (!audio.paused) requestAnimationFrame(tick);
+}
+
+function renderTicks() {
+  $("ticks").innerHTML = clips
+    .map((c, i) => `<span class="${i === idx ? "now" : rated[c.clip] ? "done" : ""}"></span>`)
+    .join("");
+  const n = Object.keys(rated).filter((k) => clips.some((c) => c.clip === k)).length;
+  $("count").textContent = `Clip ${idx + 1} of ${clips.length}  (${n} scored)`;
+}
+
+function setUnlocked(on) {
+  unlocked = on;
+  for (const b of $("scores").querySelectorAll(".score")) b.disabled = !on;
+  $("legend").textContent = on ? "How natural did that sound?" : "Listen to the whole clip to unlock scoring.";
+}
+
+async function showClip() {
+  const c = clips[idx];
+  audio.pause();
+  $("play").classList.remove("playing");
+  $("sentence").textContent = c.text;
+  $("back").disabled = idx === 0;
+  for (const b of $("scores").querySelectorAll(".score"))
+    b.setAttribute("aria-pressed", String(Number(b.dataset.score) === rated[c.clip]));
+  setUnlocked(Boolean(rated[c.clip]));
+  setStatus($("status"), "");
+  renderTicks();
+  peaks = [];
+  drawWave();
+  try {
+    const clip = await loadClip(c);
+    if (clips[idx] !== c) return;
+    peaks = clip.peaks;
+    audio.src = clip.url;
+    drawWave();
+    if (clips[idx + 1]) loadClip(clips[idx + 1]).catch(() => {});
+  } catch {
+    setStatus($("status"), "This clip's audio couldn't be loaded. Check that the server is still running, then reload.", true);
+  }
+}
+
+function togglePlay() {
+  if (!audio.src) return;
+  if (audio.paused) {
+    if (audio.ended) audio.currentTime = 0;
+    audio.play();
+  } else {
+    audio.pause();
+  }
+}
+
+audio.addEventListener("play", () => {
+  $("play").classList.add("playing");
+  $("play").setAttribute("aria-label", "Pause clip");
+  tick();
+});
+audio.addEventListener("pause", () => {
+  $("play").classList.remove("playing");
+  $("play").setAttribute("aria-label", "Play clip");
+  drawWave();
+});
+audio.addEventListener("ended", () => setUnlocked(true));
+
+async function rate(score) {
+  if (!unlocked || busy) return;
+  busy = true;
+  const c = clips[idx];
+  for (const b of $("scores").querySelectorAll(".score"))
+    b.setAttribute("aria-pressed", String(Number(b.dataset.score) === score));
+  try {
+    await api("/api/rate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rater, clip: c.clip, score }),
+    });
+    rated[c.clip] = score;
+    await new Promise((r) => setTimeout(r, 220));
+    next();
+  } catch (e) {
+    setStatus($("status"), `Score not saved: ${e.message}. Check that the server is still running, then try again.`, true);
+  } finally {
+    busy = false;
+  }
+}
+
+function next() {
+  const after = clips.findIndex((c, i) => i > idx && !rated[c.clip]);
+  const any = clips.findIndex((c) => !rated[c.clip]);
+  const target = after >= 0 ? after : any;
+  if (target < 0) return finish();
+  idx = target;
+  showClip();
+}
+
+function finish() {
+  audio.pause();
+  $("done-text").textContent = `You scored ${clips.length} clips. Thank you, ${rater}.`;
+  show("done");
+}
+
+async function begin(name) {
+  rater = name.trim();
+  if (!rater) return;
+  setStatus($("start-status"), "Loading clips…");
+  try {
+    const data = await api(`/api/clips?rater=${encodeURIComponent(rater)}`);
+    clips = data.clips;
+    rated = data.rated;
+  } catch (e) {
+    setStatus($("start-status"), `Couldn't load clips: ${e.message}. Check that scripts/mos.py serve is running, then reload.`, true);
+    return;
+  }
+  localStorage.setItem("samleng-rater", rater);
+  $("who").textContent = `Rating as ${rater}`;
+  setStatus($("start-status"), "");
+  idx = clips.findIndex((c) => !rated[c.clip]);
+  if (idx < 0) {
+    idx = clips.length - 1;
+    return finish();
+  }
+  show("rate");
+  showClip();
+}
+
+$("start-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  begin($("rater").value);
+});
+$("play").addEventListener("click", togglePlay);
+$("wave").addEventListener("click", togglePlay);
+$("back").addEventListener("click", () => { if (idx > 0) { idx--; showClip(); } });
+$("review").addEventListener("click", () => { idx = clips.length - 1; show("rate"); showClip(); });
+$("switch").addEventListener("click", () => {
+  audio.pause();
+  localStorage.removeItem("samleng-rater");
+  $("rater").value = "";
+  show("start");
+  $("rater").focus();
+});
+window.addEventListener("resize", drawWave);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", drawWave);
+
+document.addEventListener("keydown", (e) => {
+  if ($("rate").hidden || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.code === "Space") {
+    e.preventDefault();
+    togglePlay();
+  } else if (e.key >= "1" && e.key <= "5") {
+    rate(Number(e.key));
+  } else if (e.key === "ArrowLeft" && idx > 0) {
+    idx--;
+    showClip();
+  }
+});
+
+buildScores();
+const saved = localStorage.getItem("samleng-rater");
+if (saved) {
+  $("rater").value = saved;
+  begin(saved);
+}
+</script>
+</body>
+</html>
