@@ -29,6 +29,7 @@ def main() -> None:
     ap.add_argument("--reference-wav", help="voice to clone (16kHz+, a few seconds)")
     ap.add_argument("--cfg", type=float, default=2.0)
     ap.add_argument("--steps", type=int, default=10)
+    ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
 
     device = pick_device()
@@ -46,6 +47,8 @@ def main() -> None:
     extra = {"reference_wav_path": args.reference_wav} if args.reference_wav else {}
     with open(out_dir / "results.jsonl", "w", encoding="utf-8") as out:
         for it in items:
+            # Per-item seed: same audio for a sentence regardless of run order.
+            torch.manual_seed(args.seed)
             t = time.time()
             wav = model.generate(
                 text=it["text"],
