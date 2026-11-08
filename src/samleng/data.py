@@ -109,3 +109,24 @@ def distill_problems(text: str, leak: LeakCheck, banned: set[str]) -> list[str]:
     if leak(text):
         problems.append("bench overlap")
     return problems
+
+
+def distill_reject(
+    row: dict,
+    rate: tuple[float, float],
+    min_spk: float = 0.9,
+    max_cer: float = 0.3,
+    max_cer_mixed: float = 0.6,
+) -> str | None:
+    """Why a teacher clip shouldn't be trained on, or None to keep it.
+
+    Mixed clips get a looser CER limit: the ASR writes English in Khmer script.
+    """
+    if row["spk"] < min_spk:
+        return "voice"
+    limit = max_cer_mixed if row["source"] == "mixed_v1" else max_cer
+    if row["cer"] > limit:
+        return "misread"
+    if not rate[0] <= row["cps"] <= rate[1]:
+        return "speed"
+    return None

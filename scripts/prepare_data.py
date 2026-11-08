@@ -30,6 +30,8 @@ EXTRACTED = DATA_DIR / SOURCE / "extracted"
 CLIPS = DATA_DIR / SOURCE / "clips"
 OUT = OUTPUT_DIR / "data" / SOURCE
 MIN_S, MAX_S = 0.5, 20.0
+# Owner decision (2026-11-08): high ASR CER is mostly the ASR failing on names.
+MAX_CER = 0.3
 
 
 def prepare() -> None:
@@ -91,13 +93,17 @@ def stats() -> None:
     for r in rows:
         if "asr" in r:
             r["cer"] = round(khmer_cer(r["raw_text"], r["asr"]), 4)
+            if r.get("reject") == "misread":
+                del r["reject"]
+            if "reject" not in r and r["cer"] > MAX_CER:
+                r["reject"] = "misread"
     write_jsonl(OUT / "manifest.jsonl", rows)
     write_stats(pd.DataFrame(rows))
 
 
 def write_stats(df: pd.DataFrame) -> None:
     kept = df[df["reject"].isna()] if "reject" in df else df
-    cer = kept["cer"]
+    cer = df["cer"].dropna()
     per_speaker = (
         kept.groupby("speaker")["seconds"]
         .agg(clips="count", hours=lambda s: s.sum() / 3600)

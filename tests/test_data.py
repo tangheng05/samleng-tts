@@ -4,6 +4,7 @@ from samleng.data import (
     TARGET_SR,
     LeakCheck,
     distill_problems,
+    distill_reject,
     english_words,
     mixed_split,
     parse_line_index,
@@ -92,3 +93,14 @@ def test_distill_problems_flags_held_out_words_even_inside_longer_words():
     assert distill_problems("សូមផ្ញើ email ឥឡូវ", leak, banned) == ["held-out word"]
     assert distill_problems("ធ្វើ poster ថ្មី", leak, banned) == ["held-out word"]
     assert distill_problems("ថ្ងៃនេះ អាកាសធាតុ ល្អណាស់", leak, banned) == ["bench overlap"]
+
+
+def test_distill_reject_checks_voice_then_misreads_then_speed():
+    ok = {"source": "openslr42", "spk": 0.97, "cer": 0.05, "cps": 12.0}
+    rate = (9.0, 16.0)
+    assert distill_reject(ok, rate) is None
+    assert distill_reject(ok | {"spk": 0.85}, rate) == "voice"
+    assert distill_reject(ok | {"cer": 0.4}, rate) == "misread"
+    assert distill_reject(ok | {"source": "mixed_v1", "cer": 0.4}, rate) is None
+    assert distill_reject(ok | {"source": "mixed_v1", "cer": 0.7}, rate) == "misread"
+    assert distill_reject(ok | {"cps": 20.0}, rate) == "speed"
