@@ -10,11 +10,12 @@ from pathlib import Path
 import pandas as pd
 
 from samleng.bench import load_bench
+from samleng.eval.english import transcribe_english
 from samleng.eval.report import merge_results, summarize
-from samleng.paths import OUTPUT_DIR
+from samleng.paths import OUTPUT_DIR, ROOT
 from samleng.runners import read_jsonl, run, write_jsonl
 from samleng.text import transliterate, verbalize
-from samleng.tts import mms
+from samleng.tts import api, mms
 
 # transformers VITS models: label -> (model id, pinned revision)
 VITS = {
@@ -35,13 +36,15 @@ RUNNER_TTS = {
     "sengtha": ("tts_onnx", "synthesize.py", ("sengtha",)),
     "zio": ("tts_onnx", "synthesize.py", ("zio",)),
 }
-SYSTEMS = (*VITS, *RUNNER_TTS)
+LOCAL = (*VITS, *RUNNER_TTS)
+# Paid APIs: only run when named, keys from .env.
+SYSTEMS = (*LOCAL, *api.SYSTEMS)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("bench")
-    ap.add_argument("--systems", nargs="+", default=list(SYSTEMS), choices=SYSTEMS)
+    ap.add_argument("--systems", nargs="+", default=list(LOCAL), choices=SYSTEMS)
     ap.add_argument("--category", help="only run one category")
     ap.add_argument(
         "--verbalize", action="store_true", help="spell out numbers before TTS"
@@ -79,18 +82,27 @@ def main() -> None:
         write_jsonl(manifest, [{"id": it.id, "text": it.text} for it in tts_items])
         run(runner, script, *prefix, manifest, out / label)
         audio[label] = read_jsonl(out / label / "results.jsonl")
+    api_systems = [s for s in api.SYSTEMS if s in args.systems]
+    if api_systems:
+        env = api.load_env(ROOT / ".env")
+    for label in api_systems:
+        cache = OUTPUT_DIR / "api_cache" / label
+        audio[label] = api.synthesize(label, tts_items, out / label, env, cache)
 
+    clips = [(f"{s}/{r['id']}", r) for s, rs in audio.items() for r in rs]
+    is_en = {key: by_id[r["id"]].category == "english" for key, r in clips}
     asr_in, asr_out = out / "asr_in.jsonl", out / "asr_out.jsonl"
     write_jsonl(
-        asr_in,
-        [
-            {"id": f"{s}/{r['id']}", "audio": r["audio"]}
-            for s, rs in audio.items()
-            for r in rs
-        ],
+        asr_in, [{"id": k, "audio": r["audio"]} for k, r in clips if not is_en[k]]
     )
-    run("asr_qwen", "transcribe.py", asr_in, asr_out)
-    hyps = {r["id"]: r["text"] for r in read_jsonl(asr_out)}
+    hyps = {}
+    if any(not v for v in is_en.values()):
+        run("asr_qwen", "transcribe.py", asr_in, asr_out)
+        hyps = {r["id"]: r["text"] for r in read_jsonl(asr_out)}
+    en_clips = [(k, r) for k, r in clips if is_en[k]]
+    if en_clips:
+        texts = transcribe_english([r["audio"] for _, r in en_clips])
+        hyps |= {k: h for (k, _), h in zip(en_clips, texts, strict=True)}
 
     df = pd.DataFrame(
         {

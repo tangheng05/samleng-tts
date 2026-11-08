@@ -11,7 +11,8 @@ _DROP = set(_KHMER_PUNCT + string.punctuation + "«»“”‘’…")
 
 
 def normalize_khmer(text: str, spell_numbers: bool = True) -> str:
-    text = unicodedata.normalize("NFC", text)
+    # Subscript ដ and ត look and sound the same; the ASR always writes ្ត.
+    text = unicodedata.normalize("NFC", text).replace("្ដ", "្ត")
     if spell_numbers:
         text = verbalize(text)
     return "".join(

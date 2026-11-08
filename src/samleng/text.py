@@ -21,6 +21,10 @@ _STEPS = (
 
 _PERIODS = ("ព្រឹក", "ថ្ងៃត្រង់", "រសៀល", "ល្ងាច", "យប់")
 _TIME = re.compile(r"(?<![\d:])(\d{1,2}):(\d{2})(?![\d:])(\s*)")
+# Two-part only, so dates like 14/04/2026 stay with the date reader.
+_FRACTION = re.compile(r"(?<![\d/])(\d+)/(\d+)(?![\d/])")
+# A hyphen is minus in sums; only a preceding score word makes it ទល់ (owner-confirmed).
+_SCORE = re.compile(r"(លទ្ធផល|ពិន្ទុ|ឈ្នះ|ចាញ់|ស្មើ)\s*(\d+)\s*-\s*(\d+)")
 
 
 def _spoken_time(m: re.Match) -> str:
@@ -31,7 +35,12 @@ def _spoken_time(m: re.Match) -> str:
         hour -= 12
         if not m.string[m.end() :].startswith(_PERIODS):
             period = " រសៀល"
-    clock = str(hour) if int(minutes) == 0 else f"{hour}:{minutes}"
+    if int(minutes) == 0:
+        clock = str(hour)
+    elif minutes == "30":
+        clock = f"{hour}កន្លះ"  # owner-confirmed: 7:30 is ប្រាំពីរកន្លះ
+    else:
+        clock = f"{hour}:{minutes}"
     return clock + period + space
 
 
@@ -40,13 +49,15 @@ def verbalize(text: str) -> str:
     # Tha reads "25,000" as "25 comma 000"; Khmer uses "." for decimals.
     text = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", text)
     text = _TIME.sub(_spoken_time, text)
+    text = _FRACTION.sub(r"\1 ភាគ \2", text)
+    text = _SCORE.sub(r"\1 \2 ទល់ \3", text)
     text = text.replace("%", " ភាគរយ").replace("°C", " អង្សាសេ")
     for step in _STEPS:
         text = step(text)
     return text.replace("▁", "")
 
 
-# Owner-reviewed spellings (2026-11-08) for the English words in bench/pilot_v1 mixed.
+# Owner-reviewed spellings (2026-11-08) for every English word in bench v1 mixed.
 EN_KM = {
     "ai": "អេអាយ",
     "atm": "អេធីអឹម",
@@ -89,11 +100,82 @@ EN_KM = {
     "update": "អាប់ដេត",
     "version": "វើសិន",
     "video": "វីដេអូ",
+    "boss": "បូស",
+    "coffee shop": "ខហ្វីសប",
+    "congratulations": "ខុងក្រេជូលេសិន",
+    "driver": "ដ្រាយវើ",
+    "happy birthday": "ហេបភី បឺធដេ",
+    "instagram": "អ៊ីនស្តាក្រាម",
+    "manager": "ម៉ាណេជ័រ",
+    "teacher": "ធីឆឺ",
+    "tiktok": "ធិកថុក",
+    "weekend": "វីកអិន",
+    "zoom": "ហ្ស៊ូម",
+    "approve": "អាប្រូវ",
+    "backup": "បែកអាប់",
+    "battery": "ប៊ែតធឺរី",
+    "breakfast": "ប្រេកហ្វាស",
+    "browser": "ប្រោវស៊ើ",
+    "budget": "បាជ់ជិត",
+    "busy": "ប៊ីស៊ី",
+    "camera": "ខេមេរ៉ា",
+    "cancel": "ខែនស៊ល",
+    "card": "កាត",
+    "cash": "ខេស",
+    "channel": "ឆាណែល",
+    "charge": "ឆាជ",
+    "charger": "ឆាជ័រ",
+    "check-in": "ឆែកអ៊ីន",
+    "coding": "ខូឌីង",
+    "comment": "ខមមិន",
+    "confirm": "ខុនហ្វឺម",
+    "copy": "ខូពី",
+    "counter": "ខោនធ័រ",
+    "deliver": "ឌីលីវើ",
+    "design": "ឌីហ្សាញ",
+    "focus": "ហ្វូខឹស",
+    "follow": "ហ្វូឡូ",
+    "freelancer": "ហ្វ្រីឡេនស៊ើ",
+    "game": "ហ្គេម",
+    "goal": "ហ្គោល",
+    "homework": "ហូមវើក",
+    "hotel": "ហូតែល",
+    "intern": "អ៊ីនធើន",
+    "invoice": "អ៊ីនវយ",
+    "like": "ឡាយ",
+    "login": "ឡុកអ៊ីន",
+    "logout": "ឡុកអៅ",
+    "mall": "ម៉ល",
+    "marketing": "ម៉ាឃីធីង",
+    "order": "អ័រដឺ",
+    "page": "ផេក",
+    "partner": "ផាតន័រ",
+    "paste": "ផេស",
+    "presentation": "ប្រេហ្សិនតេសិន",
+    "report": "រីផត",
+    "reset": "រីសិត",
+    "resort": "រីសត",
+    "restart": "រីស្តាត",
+    "scan": "ស្កេន",
+    "service": "សឺវីស",
+    "session": "សេសិន",
+    "shopping": "សបពីង",
+    "skip": "ស្គីប",
+    "staff": "ស្តាហ្វ",
+    "story": "ស្តូរី",
+    "subscribe": "សាប់ស្គ្រាយ",
+    "sweet": "ស្វីត",
+    "text": "ធិច",
+    "ticket": "ធីកកិត",
+    "trust": "ត្រាស់",
+    "upload": "អាប់ឡូត",
+    "website": "វេបសាយ",
+    "workshop": "វើកសប",
 }
 _EN = re.compile(
-    r"(?<![A-Za-z])("
+    r"(?<![A-Za-z-])("
     + "|".join(re.escape(w) for w in sorted(EN_KM, key=len, reverse=True))
-    + r")(?![A-Za-z])",
+    + r")(?![A-Za-z-])",
     re.IGNORECASE,
 )
 

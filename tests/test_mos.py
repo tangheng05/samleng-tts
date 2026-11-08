@@ -122,7 +122,7 @@ def _active_db(y):
 def test_normalize_loudness_hits_target():
     import numpy as np
 
-    from samleng.mos import normalize_loudness
+    from samleng.audio import normalize_loudness
 
     sr = 16000
     tone = 0.02 * np.sin(2 * np.pi * 220 * np.arange(sr) / sr)
@@ -134,7 +134,7 @@ def test_normalize_loudness_hits_target():
 def test_normalize_loudness_never_clips():
     import numpy as np
 
-    from samleng.mos import normalize_loudness
+    from samleng.audio import normalize_loudness
 
     sr = 16000
     y = np.full(sr, 0.001)

@@ -1,0 +1,12 @@
+[project]
+name = "samleng-runner-train-vits"
+version = "0.1.0"
+requires-python = "==3.11.*"
+dependencies = [
+    "coqui-tts[codec]==0.28.0",
+    "huggingface-hub>=0.30",
+    "six==1.17.0",
+    "soundfile>=0.14.0",
+    "torch==2.15.0",
+    "torchaudio==2.11.1",
+]

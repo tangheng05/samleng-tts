@@ -23,3 +23,8 @@ def test_cer_is_corpus_level_over_lists():
 
 def test_cer_treats_digits_and_spoken_numbers_as_equal():
     assert khmer_cer("ឆ្នាំ 1998", "ឆ្នាំ មួយពាន់ប្រាំបួនរយកៅសិបប្រាំបី") == 0.0
+
+
+def test_subscript_da_and_ta_are_the_same_letter_for_cer():
+    # They look identical and are read the same; writers use either.
+    assert khmer_cer("ម្ដង ស្ដាប់", "ម្តងស្តាប់") == 0

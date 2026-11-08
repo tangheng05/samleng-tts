@@ -49,5 +49,44 @@ def test_transliteration_ignores_case_and_prefers_phrases():
 
 
 def test_transliteration_keeps_unknown_words_and_partial_matches():
-    assert transliterate("Zoom") == "Zoom"
+    assert transliterate("Netflix") == "Netflix"
     assert transliterate("apps") == "apps"
+
+
+def test_fractions_are_read_with_phiek_and_dates_are_untouched():
+    assert verbalize("3/4").replace(" ", "") == "បីភាគបួន"
+    assert "ភាគ" not in verbalize("ថ្ងៃទី 14/04/2026")
+
+
+def test_transliteration_leaves_hyphenated_compounds_whole():
+    assert transliterate("សូម check-up នៅទីនេះ") == "សូម check-up នៅទីនេះ"
+
+
+def test_half_hour_is_read_as_kanlah():
+    # Owner-confirmed: 7:30 ព្រឹក is said ប្រាំពីរកន្លះព្រឹក.
+    assert verbalize("ម៉ោង 7:30 ព្រឹក").replace(" ", "") == "ម៉ោងប្រាំពីរកន្លះព្រឹក"
+    assert verbalize("ម៉ោង 14:30").replace(" ", "") == "ម៉ោងពីរកន្លះរសៀល"
+    assert "កន្លះ" not in verbalize("ម៉ោង 7:15 ព្រឹក")
+
+
+def test_scores_are_read_with_tul_but_math_stays_minus():
+    # Owner-confirmed: a 2-1 result is ពីរទល់មួយ; in a sum, 5-3 is still ប្រាំដកបី.
+    assert "ពីរទល់មួយ" in verbalize("ចប់ដោយលទ្ធផល 2-1។").replace(" ", "")
+    assert "មួយទល់មួយ" in verbalize("ក្រុមទាំងពីរស្មើ 1-1").replace(" ", "")
+    assert verbalize("5-3").replace(" ", "") == "ប្រាំដកបី"
+
+
+def test_every_english_word_in_bench_v1_mixed_has_a_spelling():
+    import re
+
+    from samleng.bench import load_bench
+    from samleng.paths import ROOT
+
+    bench = load_bench(ROOT / "bench" / "khmertts_bench_v1.jsonl")
+    mixed = [it for it in bench if it.category == "mixed"]
+    left = [
+        (it.id, w)
+        for it in mixed
+        for w in re.findall(r"[A-Za-z]+", transliterate(it.text))
+    ]
+    assert left == []

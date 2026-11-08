@@ -19,6 +19,7 @@ from urllib.parse import parse_qs, urlparse
 import pandas as pd
 import soundfile as sf
 
+from samleng.audio import normalize_loudness
 from samleng.bench import load_bench
 from samleng.mos import (
     PAGE,
@@ -27,7 +28,6 @@ from samleng.mos import (
     compare,
     load_ratings,
     merge_systems,
-    normalize_loudness,
     order_for,
     summarize,
 )
