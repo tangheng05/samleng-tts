@@ -30,6 +30,9 @@ def main() -> None:
     ap.add_argument("--cfg", type=float, default=2.0)
     ap.add_argument("--steps", type=int, default=10)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument(
+        "--resume", action="store_true", help="skip ids already in results.jsonl"
+    )
     args = ap.parse_args()
 
     device = pick_device()
@@ -45,8 +48,15 @@ def main() -> None:
         items = [json.loads(line) for line in f if line.strip()]
 
     extra = {"reference_wav_path": args.reference_wav} if args.reference_wav else {}
-    with open(out_dir / "results.jsonl", "w", encoding="utf-8") as out:
+    results = out_dir / "results.jsonl"
+    done = set()
+    if args.resume and results.exists():
+        with open(results, encoding="utf-8") as f:
+            done = {json.loads(line)["id"] for line in f if line.strip()}
+    with open(results, "a" if done else "w", encoding="utf-8") as out:
         for it in items:
+            if it["id"] in done:
+                continue
             # Per-item seed: same audio for a sentence regardless of run order.
             torch.manual_seed(args.seed)
             t = time.time()
@@ -66,6 +76,7 @@ def main() -> None:
                 "gen_seconds": gen,
             }
             out.write(json.dumps(row) + "\n")
+            out.flush()
             print(f"{it['id']}: {row['seconds']:.1f}s audio in {gen:.1f}s", flush=True)
 
 

@@ -90,3 +90,10 @@ def test_every_english_word_in_bench_v1_mixed_has_a_spelling():
         for w in re.findall(r"[A-Za-z]+", transliterate(it.text))
     ]
     assert left == []
+
+
+def test_short_date_after_thngai_is_not_a_fraction():
+    short = verbalize("ថ្ងៃទី 14/04 ជាថ្ងៃចូលឆ្នាំ។")
+    assert "ភាគ" not in short and "/" not in short
+    full = verbalize("ថ្ងៃទី 14/04/2026 ជាថ្ងៃចូលឆ្នាំ។")
+    assert short.replace(" ", "") == full.replace(" ", "").replace("ពីរពាន់ម្ភៃប្រាំមួយ", "")

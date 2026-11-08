@@ -44,12 +44,19 @@ def _spoken_time(m: re.Match) -> str:
     return clock + period + space
 
 
+def _fraction(m: re.Match) -> str:
+    # After ថ្ងៃ/ថ្ងៃទី, 14/04 is a day and month: read it like a full date, minus the year.
+    if m.string[: m.start()].rstrip().endswith(("ថ្ងៃទី", "ថ្ងៃ")):
+        return f"{int(m[1])} {int(m[2])}"
+    return f"{m[1]} ភាគ {m[2]}"
+
+
 def verbalize(text: str) -> str:
     """Spell out numbers, dates, times and money in Khmer words."""
     # Tha reads "25,000" as "25 comma 000"; Khmer uses "." for decimals.
     text = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", text)
     text = _TIME.sub(_spoken_time, text)
-    text = _FRACTION.sub(r"\1 ភាគ \2", text)
+    text = _FRACTION.sub(_fraction, text)
     text = _SCORE.sub(r"\1 \2 ទល់ \3", text)
     text = text.replace("%", " ភាគរយ").replace("°C", " អង្សាសេ")
     for step in _STEPS:

@@ -131,3 +131,24 @@ def test_load_env_reads_dotenv_and_lets_real_env_win(tmp_path, monkeypatch):
     env = api.load_env(f)
     assert env["GEMINI_API_KEY"] == "shell"
     assert env["AZURE_SPEECH_REGION"] == "eastus"
+
+
+def test_repeated_empty_replies_become_an_uncached_failure(tmp_path):
+    items = [
+        Item(id="a", category="pure", text="ចុះអ្នកវិញ?"),
+        Item(id="b", category="pure", text="សួស្តី"),
+    ]
+    empty = gemini_reply(np.array([], dtype="<i2"))
+    post = FakePost(empty, empty, empty, gemini_reply())
+    rows = api.synthesize(
+        "gemini_tts",
+        items,
+        tmp_path / "out",
+        env=ENV,
+        cache_dir=tmp_path / "cache",
+        post=post,
+        sleep=lambda s: None,
+    )
+    assert rows[0]["failed"] and rows[0]["seconds"] < 0.2
+    assert not rows[1].get("failed")
+    assert len(list((tmp_path / "cache").glob("*.wav"))) == 1

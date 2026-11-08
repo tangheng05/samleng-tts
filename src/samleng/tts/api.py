@@ -40,6 +40,13 @@ class ApiError(Exception):
         self.retryable = retryable or status is None or status == 429 or status >= 500
 
 
+class EmptyReply(ApiError):
+    """The model answered without audio: a quality failure, not an outage."""
+
+    def __init__(self, msg: str):
+        super().__init__(msg, retryable=True)
+
+
 def load_env(path: Path) -> dict[str, str]:
     env = {}
     if path.exists():
@@ -84,7 +91,7 @@ def gemini_audio(reply: bytes) -> np.ndarray:
     if not data:
         # The preview model sometimes returns success with no audio.
         reason = cand.get("finishReason", "unknown")
-        raise ApiError(f"Gemini returned no audio ({reason})", retryable=True)
+        raise EmptyReply(f"Gemini returned no audio ({reason})")
     return np.frombuffer(base64.b64decode(data), dtype="<i2")
 
 
@@ -157,6 +164,7 @@ def synthesize(
     cache_dir.mkdir(parents=True, exist_ok=True)
     rows = []
     for it in items:
+        failed = False
         key = f"{system}|{SYSTEMS[system][1]}|{it.text}"
         cached = cache_dir / f"{hashlib.sha256(key.encode()).hexdigest()[:20]}.wav"
         meta = cached.with_suffix(".json")
@@ -165,10 +173,16 @@ def synthesize(
             gen = json.loads(meta.read_text())["gen_seconds"]
         else:
             t = time.time()
-            wav, sr = _call(system, it.text, env, post, sleep)
+            try:
+                wav, sr = _call(system, it.text, env, post, sleep)
+            except EmptyReply as e:
+                # Scored as silence and not cached, so a later run retries it.
+                print(f"{system} {it.id}: {e}", flush=True)
+                failed, wav, sr = True, np.zeros(2400, dtype=np.int16), 24000
             gen = time.time() - t
-            sf.write(cached, wav, sr, subtype="PCM_16")
-            meta.write_text(json.dumps({"gen_seconds": gen}))
+            if not failed:
+                sf.write(cached, wav, sr, subtype="PCM_16")
+                meta.write_text(json.dumps({"gen_seconds": gen}))
         path = out_dir / f"{it.id}.wav"
         sf.write(path, wav, sr, subtype="PCM_16")
         rows.append(
@@ -178,5 +192,6 @@ def synthesize(
                 "seconds": len(wav) / sr,
                 "gen_seconds": gen,
             }
+            | ({"failed": True} if failed else {})
         )
     return rows
