@@ -12,7 +12,13 @@ import pandas as pd
 import soundfile as sf
 
 from samleng.bench import load_bench
-from samleng.data import TARGET_SR, LeakCheck, parse_line_index, prepare_audio
+from samleng.data import (
+    TARGET_SR,
+    LeakCheck,
+    parse_line_index,
+    prepare_audio,
+    unsegment,
+)
 from samleng.eval.cer import khmer_cer
 from samleng.paths import DATA_DIR, OUTPUT_DIR, ROOT
 from samleng.runners import read_jsonl, run, write_jsonl
@@ -35,10 +41,18 @@ def prepare() -> None:
     leaks = LeakCheck(
         [it.text for p in (ROOT / "bench").rglob("*.jsonl") for it in load_bench(p)]
     )
+    manifest = OUT / "manifest.jsonl"
+    # Keep transcripts from an earlier ASR run: that step takes an hour.
+    asr_done = (
+        {r["id"]: r["asr"] for r in read_jsonl(manifest) if "asr" in r}
+        if manifest.exists()
+        else {}
+    )
     CLIPS.mkdir(parents=True, exist_ok=True)
     rows = []
     for utt, speaker, text in parse_line_index(index):
-        row = {"id": utt, "speaker": speaker, "raw_text": text, "text": verbalize(text)}
+        spoken = verbalize(unsegment(text))
+        row = {"id": utt, "speaker": speaker, "raw_text": text, "text": spoken}
         if leaks(text):
             row["reject"] = "bench_overlap"
         else:
@@ -50,9 +64,13 @@ def prepare() -> None:
             else:
                 row["audio"] = str(CLIPS / f"{utt}.wav")
                 sf.write(row["audio"], y, TARGET_SR, subtype="PCM_16")
+                if utt in asr_done:
+                    row["asr"] = asr_done[utt]
         rows.append(row)
-    write_jsonl(OUT / "manifest.jsonl", rows)
+    write_jsonl(manifest, rows)
     print(pd.Series([r.get("reject", "kept") for r in rows]).value_counts().to_string())
+    if asr_done:
+        stats()
 
 
 def asr() -> None:

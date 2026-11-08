@@ -1,5 +1,7 @@
 """Turn public Khmer speech corpora into clean training clips."""
 
+import re
+
 import librosa
 import numpy as np
 
@@ -54,3 +56,11 @@ def parse_line_index(lines) -> list[tuple[str, str, str]]:
         if len(cols) >= 2:
             rows.append((cols[0], cols[0].split("_")[1], cols[-1]))
     return rows
+
+
+_KHMER_GAP = re.compile(r"(?<=[ក-៿]) +(?=[ក-៿])")
+
+
+def unsegment(text: str) -> str:
+    """Drop word-segmentation spaces between Khmer words; TTS stretches at each one."""
+    return _KHMER_GAP.sub("", text)

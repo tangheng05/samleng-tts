@@ -39,11 +39,18 @@ def _row(system: str, category: str, g: pd.DataFrame) -> dict:
         "median_rtf": round(float((g["gen_seconds"] / g["seconds"]).median()), 2),
     }
     if category == "english":
+        per_item = [english_wer(r, h) for r, h in zip(refs, hyps, strict=True)]
         return {
             "system": system,
             "category": category,
             "n": len(g),
             "wer_%": round(100 * english_wer(refs, hyps), 1),
+            "median_wer_%": round(100 * float(pd.Series(per_item).median()), 1),
+            # Whisper loops too, e.g. on garbled audio.
+            "asr_loops": sum(
+                len(h.split()) > LOOP_RATIO * len(r.split())
+                for r, h in zip(refs, hyps, strict=True)
+            ),
             **timing,
         }
     per_item = [khmer_cer(r, h) for r, h in zip(refs, hyps, strict=True)]

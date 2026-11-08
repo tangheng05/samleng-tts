@@ -1,6 +1,7 @@
 import time
 from pathlib import Path
 
+import numpy as np
 import soundfile as sf
 import torch
 from transformers import AutoTokenizer, VitsModel
@@ -29,8 +30,13 @@ def synthesize(
     for it in items:
         torch.manual_seed(seed)  # VITS samples durations; fix it for reproducibility
         t = time.time()
-        with torch.no_grad():
-            wav = model(**tok(it.text, return_tensors="pt")).waveform[0].numpy()
+        inputs = tok(it.text, return_tensors="pt")
+        if inputs["input_ids"].shape[-1] == 0:
+            # MMS's vocab has no Latin letters: pure English becomes silence.
+            wav = np.zeros(sr // 10, dtype=np.float32)
+        else:
+            with torch.no_grad():
+                wav = model(**inputs).waveform[0].numpy()
         gen = time.time() - t
         path = out_dir / f"{it.id}.wav"
         sf.write(path, wav, sr)

@@ -1,6 +1,12 @@
 import numpy as np
 
-from samleng.data import TARGET_SR, LeakCheck, parse_line_index, prepare_audio
+from samleng.data import (
+    TARGET_SR,
+    LeakCheck,
+    parse_line_index,
+    prepare_audio,
+    unsegment,
+)
 
 
 def tone(seconds, sr, amp=0.5):
@@ -40,3 +46,10 @@ def test_parse_line_index_handles_both_openslr_layouts():
         ("khm_7548_1882674737", "7548", "សួស្តី"),
         ("khm_0308_0011865986", "0308", "អរគុណ ច្រើន"),
     ]
+
+
+def test_unsegment_joins_khmer_words_but_keeps_spaces_next_to_latin_and_digits():
+    # Owner heard sengtha stretch every word when OpenSLR's word spaces are kept.
+    assert unsegment("ស្ពាន វែង ជាង គេ") == "ស្ពានវែងជាងគេ"
+    assert unsegment("ចាក់ វីដេអូ YouTube ឱ្យ ខ្ញុំ") == "ចាក់វីដេអូ YouTube ឱ្យខ្ញុំ"
+    assert unsegment("ឆ្នាំ 2024 នេះ") == "ឆ្នាំ 2024 នេះ"
