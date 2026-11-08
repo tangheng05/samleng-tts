@@ -3,6 +3,9 @@ import numpy as np
 from samleng.data import (
     TARGET_SR,
     LeakCheck,
+    distill_problems,
+    english_words,
+    mixed_split,
     parse_line_index,
     prepare_audio,
     unsegment,
@@ -53,3 +56,39 @@ def test_unsegment_joins_khmer_words_but_keeps_spaces_next_to_latin_and_digits()
     assert unsegment("ស្ពាន វែង ជាង គេ") == "ស្ពានវែងជាងគេ"
     assert unsegment("ចាក់ វីដេអូ YouTube ឱ្យ ខ្ញុំ") == "ចាក់វីដេអូ YouTube ឱ្យខ្ញុំ"
     assert unsegment("ឆ្នាំ 2024 នេះ") == "ឆ្នាំ 2024 នេះ"
+
+
+def test_english_words_are_lowercased_and_keep_hyphenated_compounds():
+    assert english_words("សូម check-in នៅ Hotel ABC") == {"check-in", "hotel", "abc"}
+
+
+def test_mixed_split_holds_out_words_from_training():
+    from samleng.bench import Item
+
+    items = [
+        Item("m1", "mixed", "ខ្ញុំ check email"),
+        Item("m2", "mixed", "បើក app"),
+        Item("m3", "mixed", "ផ្ញើ email ឥឡូវ"),
+        Item("m4", "mixed", "ទិញ ticket"),
+    ]
+    split = mixed_split(items, seed=1)
+    assert split == mixed_split(items, seed=1)
+    assert not set(split["unseen"]) & set(split["seen"] + split["partial"])
+    banned = set(split["banned"])
+    for it in items:
+        words = english_words(it.text)
+        if it.id in split["unseen"]:
+            assert words <= banned
+        if it.id in split["seen"]:
+            assert not words & banned
+        if it.id in split["partial"]:
+            assert words & banned and words - banned
+
+
+def test_distill_problems_flags_held_out_words_even_inside_longer_words():
+    leak = LeakCheck(["ថ្ងៃនេះអាកាសធាតុល្អណាស់។"])
+    banned = {"post", "email"}
+    assert distill_problems("សូមផ្ញើ file ឥឡូវ", leak, banned) == []
+    assert distill_problems("សូមផ្ញើ email ឥឡូវ", leak, banned) == ["held-out word"]
+    assert distill_problems("ធ្វើ poster ថ្មី", leak, banned) == ["held-out word"]
+    assert distill_problems("ថ្ងៃនេះ អាកាសធាតុ ល្អណាស់", leak, banned) == ["bench overlap"]

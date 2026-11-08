@@ -1,5 +1,6 @@
 """Turn public Khmer speech corpora into clean training clips."""
 
+import random
 import re
 
 import librosa
@@ -64,3 +65,47 @@ _KHMER_GAP = re.compile(r"(?<=[ក-៿]) +(?=[ក-៿])")
 def unsegment(text: str) -> str:
     """Drop word-segmentation spaces between Khmer words; TTS stretches at each one."""
     return _KHMER_GAP.sub("", text)
+
+
+_EN_WORD = re.compile(r"[A-Za-z][A-Za-z'-]*[A-Za-z]|[A-Za-z]")
+
+
+def english_words(text: str) -> set[str]:
+    return {w.lower() for w in _EN_WORD.findall(text)}
+
+
+def mixed_split(items, seed: int = 0) -> dict:
+    """Hold out half the bench's mixed sentences: their English words never go into training.
+
+    After fine-tuning, `unseen` measures generalization to new English words, `seen`
+    the gain on trained words; `partial` sentences mix both.
+    """
+    words = {it.id: english_words(it.text) for it in items if it.category == "mixed"}
+    ids = sorted(words)
+    random.Random(seed).shuffle(ids)
+    held = ids[: len(ids) // 2]
+    banned = set().union(*(words[i] for i in held))
+    unseen = sorted(i for i, w in words.items() if w and w <= banned)
+    seen = sorted(i for i, w in words.items() if not w & banned)
+    partial = sorted(set(words) - set(unseen) - set(seen))
+    return {
+        "seed": seed,
+        "banned": sorted(banned),
+        "unseen": unseen,
+        "seen": seen,
+        "partial": partial,
+    }
+
+
+def distill_problems(text: str, leak: LeakCheck, banned: set[str]) -> list[str]:
+    """Why a sentence can't be training text: bench overlap, or a held-out English word.
+
+    Held-out words also count inside longer words ("poster" teaches "post").
+    """
+    words = english_words(text)
+    problems = []
+    if any(b in w for w in words for b in banned if w == b or len(b) > 3):
+        problems.append("held-out word")
+    if leak(text):
+        problems.append("bench overlap")
+    return problems
