@@ -22,6 +22,15 @@ def test_summarize_per_category_and_overall():
     assert s.loc["ALL", "median_rtf"] == 0.5
 
 
+def test_merge_keeps_other_systems_and_replaces_rerun():
+    from samleng.eval.report import merge_results
+
+    old = pd.DataFrame({"system": ["a", "a", "b"], "hyp": ["old", "old", "keep"]})
+    new = pd.DataFrame({"system": ["a"], "hyp": ["new"]})
+    m = merge_results(old, new)
+    assert sorted(m["hyp"]) == ["keep", "new"]
+
+
 def test_asr_loop_is_flagged():
     from samleng.eval.report import is_asr_loop
 

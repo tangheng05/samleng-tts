@@ -1,4 +1,4 @@
-from samleng.text import verbalize
+from samleng.text import transliterate, verbalize
 
 
 def test_khmer_digits_are_spelled_out():
@@ -37,3 +37,17 @@ def test_whole_hour_has_no_zero():
 def test_existing_period_word_not_doubled():
     assert verbalize("ម៉ោង 15:00 រសៀល") == verbalize("ម៉ោង 3 រសៀល")
     assert verbalize("3:30 រសៀល").count("រសៀល") == 1
+
+
+def test_english_words_are_written_in_khmer_script():
+    assert transliterate("ខ្ញុំមាន meeting ម៉ោងប្រាំបួន។") == "ខ្ញុំមាន មីធីង ម៉ោងប្រាំបួន។"
+
+
+def test_transliteration_ignores_case_and_prefers_phrases():
+    assert transliterate("Thank you ណាស់") == "ថេងគ្យូ ណាស់"
+    assert transliterate("ONLINE") == "អនឡាញ"
+
+
+def test_transliteration_keeps_unknown_words_and_partial_matches():
+    assert transliterate("Zoom") == "Zoom"
+    assert transliterate("apps") == "apps"

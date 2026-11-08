@@ -19,6 +19,12 @@ def summarize(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def merge_results(old: pd.DataFrame, new: pd.DataFrame) -> pd.DataFrame:
+    """Replace the systems in `new`, keep every other system's earlier rows."""
+    kept = old[~old["system"].isin(new["system"].unique())]
+    return pd.concat([kept, new], ignore_index=True)
+
+
 def is_asr_loop(ref: str, hyp: str) -> bool:
     return len(normalize_khmer(hyp)) > LOOP_RATIO * len(normalize_khmer(ref))
 

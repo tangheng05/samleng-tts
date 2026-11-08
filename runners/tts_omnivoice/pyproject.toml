@@ -1,0 +1,8 @@
+[project]
+name = "samleng-runner-tts-omnivoice"
+version = "0.1.0"
+requires-python = "==3.11.*"
+dependencies = [
+    "omnivoice==0.2.1",
+    "soundfile>=0.14.0",
+]

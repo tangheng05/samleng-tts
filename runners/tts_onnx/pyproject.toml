@@ -1,0 +1,10 @@
+[project]
+name = "samleng-runner-tts-onnx"
+version = "0.1.0"
+requires-python = "==3.11.*"
+dependencies = [
+    "huggingface-hub>=0.30",
+    "khmer-nltk==1.6",
+    "onnxruntime>=1.20",
+    "soundfile>=0.14.0",
+]
