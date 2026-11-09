@@ -3,6 +3,7 @@ name = "samleng-runner-train-vits"
 version = "0.1.0"
 requires-python = "==3.11.*"
 dependencies = [
+    "accelerate==1.15.0",
     "coqui-tts[codec]==0.28.0",
     "huggingface-hub>=0.30",
     "six==1.17.0",

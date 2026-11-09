@@ -23,6 +23,14 @@ REPO = "sengtha/khmer-tts-female-v2"
 REV = "c6fde511a839c4f20cdce96e2a35735d493030d2"
 
 
+class DeviceAwareTrainer(Trainer):
+    """Coqui's trainer only moves training batches through Accelerate; do eval too."""
+
+    def get_eval_dataloader(self, samples, *, verbose=True):
+        loader = super().get_eval_dataloader(samples, verbose=verbose)
+        return self.prepare_accelerate_loader(loader)
+
+
 def manifest_formatter(limit: int | None):
     def fmt(root_path, meta_file, **kwargs):
         samples = []
@@ -51,6 +59,12 @@ def main() -> None:
     ap.add_argument("out_dir", type=Path)
     ap.add_argument("--continue-run", type=Path, help="run folder to resume")
     ap.add_argument("--save-step", type=int, default=1000)
+    ap.add_argument(
+        "--device",
+        choices=["cpu", "mps"],
+        default="cpu",
+        help="mps: Apple GPU via Accelerate",
+    )
     ap.add_argument("--limit", type=int, help="use only the first N clips")
     ap.add_argument("--epochs", type=int, default=100)
     ap.add_argument("--batch-size", type=int, default=8)
@@ -82,8 +96,10 @@ def main() -> None:
     else:
         start = hf_hub_download(REPO, "best_model.pth", revision=REV)
         targs = TrainerArgs(restore_path=start)
+    # The trainer only knows CUDA; Accelerate is its route to Apple's GPU.
+    targs.use_accelerate = args.device == "mps"
     out = str(args.continue_run or args.out_dir)
-    trainer = Trainer(
+    trainer = DeviceAwareTrainer(
         targs, config, out, model=model, train_samples=train, eval_samples=evals
     )
     trainer.fit()
