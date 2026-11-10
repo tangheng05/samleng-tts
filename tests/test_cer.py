@@ -1,4 +1,5 @@
-from samleng.eval.cer import khmer_cer, normalize_khmer
+from samleng.eval.cer import english_hits, khmer_cer, mixed_cer, normalize_khmer
+from samleng.text import EN_KM
 
 
 def test_normalize_drops_spaces_zwsp_and_punctuation():
@@ -28,3 +29,19 @@ def test_cer_treats_digits_and_spoken_numbers_as_equal():
 def test_subscript_da_and_ta_are_the_same_letter_for_cer():
     # They look identical and are read the same; writers use either.
     assert khmer_cer("ម្ដង ស្ដាប់", "ម្តងស្តាប់") == 0
+
+
+def test_mixed_cer_accepts_english_in_either_script():
+    ref = "សូម upload រូបថតនៅលើ website។"
+    khmer_script = f"សូម{EN_KM['upload']}រូបថតនៅលើ{EN_KM['website']}"
+    assert khmer_cer(ref, khmer_script) > 0.3
+    assert mixed_cer(ref, khmer_script) == 0
+    assert mixed_cer(ref, "សូម Upload រូបថតនៅលើ Website") == 0
+
+
+def test_english_hits_counts_each_english_word_once():
+    ref = "សូម upload រូបថតនៅលើ website។"
+    assert english_hits(ref, f"សូម{EN_KM['upload']}រូបថតនៅលើវេបសៃ") == (2, 2)
+    assert english_hits(ref, f"សូម{EN_KM['upload']}រូបថតនៅលើផ្ទះ") == (1, 2)
+    assert english_hits(ref, "សូមរូបថត") == (0, 2)
+    assert english_hits("ខ្ញុំសុខសប្បាយ", "ខ្ញុំសុខសប្បាយ") == (0, 0)

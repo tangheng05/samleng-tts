@@ -1,6 +1,8 @@
+import math
+
 import pandas as pd
 
-from samleng.eval.report import compare_to_base, summarize
+from samleng.eval.report import compare_to_base, spearman_ci, summarize
 
 
 def test_summarize_per_category_and_overall():
@@ -56,3 +58,13 @@ def test_compare_to_base_pairs_sentences():
     assert row.median_cer_base_pct == 25.0
     assert row.median_cer_pct == 0.0
     assert set(out.category) == {"pure", "ALL"}
+
+
+def test_spearman_ci_brackets_the_estimate():
+    x = list(range(30))
+    rho, lo, hi = spearman_ci(x, [-v for v in x])
+    assert rho == -1.0 and lo == hi == -1.0
+    noisy = [v + (7 if v % 3 == 0 else -7) for v in x]
+    rho, lo, hi = spearman_ci(x, noisy)
+    assert lo <= rho <= hi and 0 < rho < 1
+    assert all(math.isnan(v) for v in spearman_ci([1, 1, 1], [1, 2, 3]))

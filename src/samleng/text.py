@@ -1,3 +1,5 @@
+import functools
+import json
 import re
 
 import tha.cardinals
@@ -6,6 +8,8 @@ import tha.datetime
 import tha.decimals
 import tha.normalize
 import tha.phone_numbers
+
+from samleng.paths import ROOT
 
 # Order matters: specific patterns (dates, phones, money) before bare numbers.
 _STEPS = (
@@ -179,14 +183,31 @@ EN_KM = {
     "website": "វេបសាយ",
     "workshop": "វើកសប",
 }
-_EN = re.compile(
-    r"(?<![A-Za-z-])("
-    + "|".join(re.escape(w) for w in sorted(EN_KM, key=len, reverse=True))
-    + r")(?![A-Za-z-])",
-    re.IGNORECASE,
-)
 
 
-def transliterate(text: str) -> str:
+@functools.cache
+def _pattern(keys: frozenset[str]) -> re.Pattern:
+    return re.compile(
+        r"(?<![A-Za-z-])("
+        + "|".join(re.escape(w) for w in sorted(keys, key=len, reverse=True))
+        + r")(?![A-Za-z-])",
+        re.IGNORECASE,
+    )
+
+
+@functools.cache
+def train_words() -> dict[str, str]:
+    """Owner-approved spellings of the distillation text's English words (not the bench's)."""
+    return json.loads((ROOT / "texts" / "en_km_train.json").read_text(encoding="utf-8"))
+
+
+def english_spans(text: str) -> list[tuple[str, str]]:
+    """(English, approved Khmer spelling) for each known English word or phrase in text."""
+    return [
+        (m[1], EN_KM[m[1].lower()]) for m in _pattern(frozenset(EN_KM)).finditer(text)
+    ]
+
+
+def transliterate(text: str, words: dict[str, str] = EN_KM) -> str:
     """Rewrite known English words in Khmer script, as Khmer speakers say them."""
-    return _EN.sub(lambda m: EN_KM[m[1].lower()], text)
+    return _pattern(frozenset(words)).sub(lambda m: words[m[1].lower()], text)

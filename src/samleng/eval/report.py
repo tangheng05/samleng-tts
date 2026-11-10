@@ -1,5 +1,6 @@
+import numpy as np
 import pandas as pd
-from scipy.stats import wilcoxon
+from scipy.stats import spearmanr, wilcoxon
 
 from samleng.eval.cer import khmer_cer, normalize_khmer
 from samleng.eval.english import english_wer
@@ -66,14 +67,12 @@ def _row(system: str, category: str, g: pd.DataFrame) -> dict:
     }
 
 
-def compare_to_base(df: pd.DataFrame, base: str) -> pd.DataFrame:
+def compare_to_base(df: pd.DataFrame, base: str, metric=khmer_cer) -> pd.DataFrame:
     """Per-sentence CER of each system vs `base` on the same sentences, per category and ALL.
 
     Expects columns: system, id, category, ref, hyp. p is a paired Wilcoxon test.
     """
-    df = df.assign(
-        cer=[khmer_cer(r, h) for r, h in zip(df["ref"], df["hyp"].fillna(""))]
-    )
+    df = df.assign(cer=[metric(r, h) for r, h in zip(df["ref"], df["hyp"].fillna(""))])
     ref = df[df["system"] == base].set_index("id")["cer"]
     rows = []
     for system, g in df[df["system"] != base].groupby("system"):
@@ -97,3 +96,19 @@ def compare_to_base(df: pd.DataFrame, base: str) -> pd.DataFrame:
                 }
             )
     return pd.DataFrame(rows)
+
+
+def spearman_ci(x, y, n_boot: int = 2000, seed: int = 0) -> tuple[float, float, float]:
+    """Spearman rho with a 95% bootstrap CI over paired items."""
+    x, y = np.asarray(x, float), np.asarray(y, float)
+    if np.ptp(x) == 0 or np.ptp(y) == 0:
+        return float("nan"), float("nan"), float("nan")
+    rho = float(spearmanr(x, y).statistic)
+    rng = np.random.default_rng(seed)
+    boots = []
+    for _ in range(n_boot):
+        i = rng.integers(0, len(x), len(x))
+        if np.ptp(x[i]) and np.ptp(y[i]):
+            boots.append(spearmanr(x[i], y[i]).statistic)
+    lo, hi = np.percentile(boots, [2.5, 97.5])
+    return round(rho, 3), round(float(lo), 3), round(float(hi), 3)

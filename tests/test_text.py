@@ -1,4 +1,4 @@
-from samleng.text import transliterate, verbalize
+from samleng.text import EN_KM, train_words, transliterate, verbalize
 
 
 def test_khmer_digits_are_spelled_out():
@@ -97,3 +97,19 @@ def test_short_date_after_thngai_is_not_a_fraction():
     assert "ភាគ" not in short and "/" not in short
     full = verbalize("ថ្ងៃទី 14/04/2026 ជាថ្ងៃចូលឆ្នាំ។")
     assert short.replace(" ", "") == full.replace(" ", "").replace("ពីរពាន់ម្ភៃប្រាំមួយ", "")
+
+
+def test_transliterate_with_training_words():
+    words = {**EN_KM, **train_words()}
+    assert transliterate("Netflix", words) == words["netflix"]
+    assert (
+        transliterate("សូម check-up នៅទីនេះ", words) == f"សូម {words['check-up']} នៅទីនេះ"
+    )
+    assert transliterate("Netflix") == "Netflix"
+
+
+def test_training_words_are_khmer_and_skip_eval_words():
+    words = train_words()
+    assert len(words) >= 517
+    assert not set(words) & set(EN_KM)
+    assert all("\u1780" <= c <= "\u17ff" for v in words.values() for c in v)

@@ -18,6 +18,7 @@ import pandas as pd
 
 from samleng.bench import load_bench
 from samleng.data import mixed_group
+from samleng.eval.cer import mixed_cer
 from samleng.eval.report import compare_to_base
 from samleng.paths import OUTPUT_DIR, ROOT
 from samleng.runners import read_jsonl, run, write_jsonl
@@ -86,15 +87,16 @@ def main() -> None:
         if d.name.isdigit() and (d / "results.csv").exists():
             frames.append(pd.read_csv(d / "results.csv").assign(system=f"step{d.name}"))
 
-    table = compare_to_base(pd.concat(frames, ignore_index=True), "base")
+    # Same as plain CER without English words; on mixed it accepts either script.
+    table = compare_to_base(pd.concat(frames, ignore_index=True), "base", mixed_cer)
     table["order"] = table["system"].str.removeprefix("step").astype(int)
     table = table.sort_values(["category", "order"]).drop(columns="order")
     table["p"] = table["p"].map("{:.2g}".format)
     text = (
         f"# {name}: checkpoints vs base sengtha (bench v1, verbalized)\n\n"
-        "Median per-sentence CER; better/worse/same count sentences vs base; "
-        "p = paired Wilcoxon. Mixed CER is biased (the ASR spells English "
-        "inconsistently) but the bias is shared, so compare checkpoints, not systems.\n\n"
+        "Median per-sentence CER with English words in Khmer script on both sides "
+        "(mixed CER, same as CER without English); better/worse/same count "
+        "sentences vs base; p = paired Wilcoxon.\n\n"
         + table.to_markdown(index=False)
         + "\n"
     )
