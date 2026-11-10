@@ -2,7 +2,7 @@
 
 Real-time, native-sounding Khmer text-to-speech that runs on everyday hardware, plus an open benchmark for Khmer TTS with human ratings. *Samleng* means "voice" in Khmer.
 
-> Status: **KhmerTTS-Bench v1 results in** (7 open models + Gemini). Now training a small real-time voice distilled from VoxCPM2.
+> Status: **KhmerTTS-Bench v1 results in** (7 open models + Gemini 2.5 and 3.8). Now training a small real-time voice distilled from VoxCPM2.
 
 Write-ups: [How good is open Khmer TTS in 2026?](docs/posts/01-how-good-is-open-khmer-tts.md) · [Every open Khmer voice, measured](docs/posts/02-every-open-khmer-tts-model.md)
 
@@ -20,9 +20,10 @@ Open Khmer TTS has improved fast, but there's no shared way to measure it, and m
 
 | | Pure Khmer | Long | Names | Numbers (digits) | All Khmer | English WER | Speed (RTF) | License |
 |---|---|---|---|---|---|---|---|---|
+| Gemini 3.8 TTS (`gemini-3.8-flash-tts`) | 0.0% | 0.0% | 2.0% | 0.0% | 2.2% | 0% | 0.84 (API) | commercial |
 | [VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) (2.3B) | 5.9% | 0.0% | 3.6% | 6.4% | 6.4% | 0% | 1.86 (MPS) | Apache-2.0 |
 | [sengtha](https://huggingface.co/sengtha/khmer-tts-female-v2) (VITS) | 7.8% | 3.3% | 7.8% | 35.0% | 17.2% | 165% | **0.16 (CPU)** | CC-BY-SA-4.0 |
-| Gemini TTS (`gemini-2.5-flash-preview-tts`) | 13.0% | 5.4% | 10.0% | 18.3% | 15.4% | 0% | 1.09 (API) | commercial |
+| Gemini 2.5 TTS (`gemini-2.5-flash-preview-tts`) | 13.0% | 5.4% | 10.0% | 18.3% | 15.4% | 0% | 1.09 (API) | commercial |
 | [OmniVoice](https://huggingface.co/k2-fsa/OmniVoice) | 10.6% | 6.6% | 7.8% | 35.4% | 17.3% | 0% | 1.43 (MPS) | CC-BY-NC-4.0 weights |
 | [khmerttsopensource/khmer-tts](https://huggingface.co/khmerttsopensource/khmer-tts) (MMS fine-tune) | 22.2% | 16.6% | 26.0% | 48.4% | 31.5% | 100% | 0.08 (CPU) | CC-BY-NC-4.0 |
 | [MMS-TTS Khmer](https://huggingface.co/facebook/mms-tts-khm) | 23.1% | 19.0% | 30.0% | 51.4% | 35.3% | 100% | 0.08 (CPU) | CC-BY-NC-4.0 |
@@ -31,7 +32,8 @@ Open Khmer TTS has improved fast, but there's no shared way to measure it, and m
 
 - Median CER per category (lower is better); English is scored by [Whisper large-v3-turbo](https://huggingface.co/openai/whisper-large-v3-turbo) word error rate (over 100% = the recognizer heard many extra words). "All Khmer" is every category except English, mixed included.
 - Mixed sentences have no column: CER is not a valid metric there (see below). Human ratings of mixed sentences come in the next listening study.
-- **Gemini returned no audio for 8 of 70 mixed sentences** (11%) after four attempts each, e.g. "WiFi នៅហាងកាហ្វេនេះលឿនណាស់។". It appears to treat some code-switched text as something to answer rather than read. These count as silence.
+- **Gemini 2.5 returned no audio for 8 of 70 mixed sentences** (11%) after four attempts each, e.g. "WiFi នៅហាងកាហ្វេនេះលឿនណាស់។". It appears to treat some code-switched text as something to answer rather than read. These count as silence.
+- **Gemini 3.8 read all 320 sentences** and is the most accurate system here. It reads a style prefix such as "Say in a warm, friendly voice:" out loud, so it gets the bare text (same voice, Callirrhoe). Gemini 2.5 needs that prefix to read rather than answer.
 - With our text frontend (numbers spelled out), number errors mostly disappear; v1 results with the frontend will follow. Zio's own number normalizer is not used.
 
 ## Pilot results (Phase 0, 100 sentences)
