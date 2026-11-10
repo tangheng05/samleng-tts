@@ -1,7 +1,8 @@
 """Build the sentences VoxCPM2 reads in sengtha's voice (Phase 2 distillation).
 
-uv run python scripts/distill_text.py           # 500 mixed + 1,000 OpenSLR sentences
-Writes outputs/distill/v1/tts_in.jsonl ({"id", "source", "text"}), ready for the VoxCPM2 runner.
+uv run python scripts/distill_text.py                # v1: 500 mixed + 1,000 OpenSLR sentences
+uv run python scripts/distill_text.py --version v2   # v2: new mixed + numbers + unused OpenSLR
+Writes outputs/distill/<version>/tts_in.jsonl ({"id", "source", "text"}), ready for the VoxCPM2 runner.
 """
 
 import argparse
@@ -15,12 +16,24 @@ from samleng.paths import OUTPUT_DIR, ROOT
 from samleng.runners import read_jsonl, write_jsonl
 from samleng.text import verbalize
 
+# version -> (source, file under texts/, id prefix); earlier versions' OpenSLR rows are skipped.
+TEXTS = {
+    "v1": [("mixed_v1", "distill_mixed_v1.txt", "mix")],
+    "v2": [
+        ("mixed_v2", "distill_mixed_v2.txt", "mix2"),
+        ("numbers_v2", "distill_numbers_v2.txt", "num2"),
+    ],
+}
+
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument(
-        "--openslr", type=int, default=1000, help="OpenSLR sentences to add"
+        "--openslr",
+        type=int,
+        help="OpenSLR sentences to add (v1: 1000, later: all unused)",
     )
+    ap.add_argument("--version", default="v1", choices=TEXTS)
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
 
@@ -32,13 +45,21 @@ def main() -> None:
     banned = set(split["banned"])
 
     rows = []
-    mixed = (ROOT / "texts" / "distill_mixed_v1.txt").read_text(encoding="utf-8")
-    for i, text in enumerate((t.strip() for t in mixed.splitlines() if t.strip()), 1):
-        if problems := distill_problems(text, leak, banned):
-            raise SystemExit(f"texts/distill_mixed_v1.txt line {i}: {problems}: {text}")
-        rows.append(
-            {"id": f"mix-{i:03d}", "source": "mixed_v1", "text": verbalize(text)}
-        )
+    for source, name, prefix in TEXTS[args.version]:
+        lines = (ROOT / "texts" / name).read_text(encoding="utf-8").splitlines()
+        for i, text in enumerate((t.strip() for t in lines if t.strip()), 1):
+            if problems := distill_problems(text, leak, banned):
+                raise SystemExit(f"texts/{name} line {i}: {problems}: {text}")
+            rows.append(
+                {"id": f"{prefix}-{i:03d}", "source": source, "text": verbalize(text)}
+            )
+
+    used = set()
+    for version in list(TEXTS)[: list(TEXTS).index(args.version)]:
+        used |= {
+            r["id"]
+            for r in read_jsonl(OUTPUT_DIR / "distill" / version / "tts_in.jsonl")
+        }
 
     manifest = read_jsonl(OUTPUT_DIR / "data" / "openslr42" / "manifest.jsonl")
     slr = [
@@ -47,12 +68,19 @@ def main() -> None:
         if "reject" not in r and not distill_problems(r["raw_text"], leak, banned)
     ]
     random.Random(args.seed).shuffle(slr)
+    slr = [r for r in slr if f"slr-{r['id']}" not in used]
+    n = args.openslr or (1000 if args.version == "v1" else len(slr))
     rows += [
         {"id": f"slr-{r['id']}", "source": "openslr42", "text": r["text"]}
-        for r in slr[: args.openslr]
+        for r in slr[:n]
     ]
 
-    out = OUTPUT_DIR / "distill" / "v1" / "tts_in.jsonl"
+    out = OUTPUT_DIR / "distill" / args.version / "tts_in.jsonl"
+    if out.exists():
+        # Teacher audio is generated from this file; the OpenSLR pool may have changed since.
+        raise SystemExit(
+            f"{out} exists: it is frozen once generated, delete it by hand"
+        )
     write_jsonl(out, rows)
     print(dict(Counter(r["source"] for r in rows)), "->", out)
 
