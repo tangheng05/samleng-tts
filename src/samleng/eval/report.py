@@ -1,4 +1,5 @@
 import pandas as pd
+from scipy.stats import wilcoxon
 
 from samleng.eval.cer import khmer_cer, normalize_khmer
 from samleng.eval.english import english_wer
@@ -63,3 +64,36 @@ def _row(system: str, category: str, g: pd.DataFrame) -> dict:
         "asr_loops": sum(is_asr_loop(r, h) for r, h in zip(refs, hyps, strict=True)),
         **timing,
     }
+
+
+def compare_to_base(df: pd.DataFrame, base: str) -> pd.DataFrame:
+    """Per-sentence CER of each system vs `base` on the same sentences, per category and ALL.
+
+    Expects columns: system, id, category, ref, hyp. p is a paired Wilcoxon test.
+    """
+    df = df.assign(
+        cer=[khmer_cer(r, h) for r, h in zip(df["ref"], df["hyp"].fillna(""))]
+    )
+    ref = df[df["system"] == base].set_index("id")["cer"]
+    rows = []
+    for system, g in df[df["system"] != base].groupby("system"):
+        g = g[g["id"].isin(ref.index)]
+        groups = [*g.groupby("category"), ("ALL", g)]
+        for category, c in groups:
+            new, old = c.set_index("id")["cer"], ref[c["id"]]
+            diff = (new - old).round(6)
+            nonzero = diff[diff != 0]
+            rows.append(
+                {
+                    "system": system,
+                    "category": category,
+                    "n": len(c),
+                    "median_cer_base_pct": round(100 * float(old.median()), 1),
+                    "median_cer_pct": round(100 * float(new.median()), 1),
+                    "better": int((diff < 0).sum()),
+                    "worse": int((diff > 0).sum()),
+                    "same": int((diff == 0).sum()),
+                    "p": float(wilcoxon(nonzero).pvalue) if len(nonzero) > 1 else 1.0,
+                }
+            )
+    return pd.DataFrame(rows)

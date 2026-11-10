@@ -6,6 +6,7 @@ from samleng.data import (
     distill_problems,
     distill_reject,
     english_words,
+    mixed_group,
     mixed_split,
     parse_line_index,
     prepare_audio,
@@ -104,3 +105,11 @@ def test_distill_reject_checks_voice_then_misreads_then_speed():
     assert distill_reject(ok | {"source": "mixed_v1", "cer": 0.4}, rate) is None
     assert distill_reject(ok | {"source": "mixed_v1", "cer": 0.7}, rate) == "misread"
     assert distill_reject(ok | {"cps": 20.0}, rate) == "speed"
+
+
+def test_mixed_group_relabels_only_mixed():
+    split = {"unseen": ["mixed-01"], "seen": ["mixed-02"], "partial": ["mixed-03"]}
+    assert mixed_group("mixed-01", "mixed", split) == "mixed_unseen"
+    assert mixed_group("mixed-02", "mixed", split) == "mixed_seen"
+    assert mixed_group("mixed-03", "mixed", split) == "mixed_partial"
+    assert mixed_group("pure-01", "pure", split) == "pure"

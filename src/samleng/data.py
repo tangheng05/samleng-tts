@@ -97,6 +97,16 @@ def mixed_split(items, seed: int = 0) -> dict:
     }
 
 
+def mixed_group(item_id: str, category: str, split: dict) -> str:
+    """`mixed` becomes mixed_unseen / mixed_seen / mixed_partial; other categories pass through."""
+    if category != "mixed":
+        return category
+    for group in ("unseen", "seen", "partial"):
+        if item_id in split[group]:
+            return f"mixed_{group}"
+    raise KeyError(f"{item_id} is not in the mixed split")
+
+
 def distill_problems(text: str, leak: LeakCheck, banned: set[str]) -> list[str]:
     """Why a sentence can't be training text: bench overlap, or a held-out English word.
 

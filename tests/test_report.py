@@ -1,6 +1,6 @@
 import pandas as pd
 
-from samleng.eval.report import summarize
+from samleng.eval.report import compare_to_base, summarize
 
 
 def test_summarize_per_category_and_overall():
@@ -36,3 +36,23 @@ def test_asr_loop_is_flagged():
 
     assert is_asr_loop("ខ្ញុំសុំទោស", "ខ្ញុំសុំទោស ខ្ញុំសុំទោស")
     assert not is_asr_loop("ខ្ញុំសុំទោស", "ខ្ញុំសុំទោ")
+
+
+def test_compare_to_base_pairs_sentences():
+    rows = [
+        # base, then a checkpoint that fixes s1 and s2 and breaks nothing
+        ("base", "s1", "pure", "abcd", "abxx"),
+        ("base", "s2", "pure", "abcd", "abcx"),
+        ("base", "s3", "pure", "abcd", "abcd"),
+        ("step2", "s1", "pure", "abcd", "abcd"),
+        ("step2", "s2", "pure", "abcd", "abcd"),
+        ("step2", "s3", "pure", "abcd", "abcd"),
+    ]
+    df = pd.DataFrame(rows, columns=["system", "id", "category", "ref", "hyp"])
+    out = compare_to_base(df, "base")
+    row = out[out.category == "pure"].iloc[0]
+    assert row.system == "step2"
+    assert (row.n, row.better, row.worse, row.same) == (3, 2, 0, 1)
+    assert row.median_cer_base_pct == 25.0
+    assert row.median_cer_pct == 0.0
+    assert set(out.category) == {"pure", "ALL"}
