@@ -97,6 +97,7 @@ No voices are used without consent. Generated audio should be labeled as AI-gene
 | [sengtha/khmer-tts-female-v2](https://huggingface.co/sengtha/khmer-tts-female-v2) (trained on DDD-Cambodia) | Evaluated; base of our fine-tune | CC-BY-SA-4.0 |
 | [OmniVoice](https://huggingface.co/k2-fsa/OmniVoice), [Zio](https://huggingface.co/sombochea/zio-tts), [khmerttsopensource/khmer-tts](https://huggingface.co/khmerttsopensource/khmer-tts), [KrorngAI/mms-tts-khm-finetuned](https://huggingface.co/KrorngAI/mms-tts-khm-finetuned) | Evaluated | see table above |
 | [OpenSLR 42](https://openslr.org/42/) (Google, Khmer) | Real-speech data pipeline, distillation text | CC-BY-SA-4.0 |
+| [Khmer Wikipedia](https://km.wikipedia.org) via [wikimedia/wikipedia](https://huggingface.co/datasets/wikimedia/wikipedia) (20231101.km) | Distillation text (`texts/distill_wiki_v3.txt`) | CC-BY-SA-3.0 / GFDL |
 | [Whisper large-v3-turbo](https://huggingface.co/openai/whisper-large-v3-turbo) | ASR judge for English | MIT |
 | [WavLM-base-plus-sv](https://huggingface.co/microsoft/wavlm-base-plus-sv) | Speaker similarity | not stated on the model card |
 | [CMUdict](https://github.com/cmusphinx/cmudict) | English → Khmer-script converter | BSD-2-Clause |

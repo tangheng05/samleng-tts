@@ -2,6 +2,7 @@
 
 uv run python scripts/distill_text.py                # v1: 500 mixed + 1,000 OpenSLR sentences
 uv run python scripts/distill_text.py --version v2   # v2: new mixed + numbers + unused OpenSLR
+uv run python scripts/distill_text.py --version v3   # v3: Khmer Wikipedia sentences
 Writes outputs/distill/<version>/tts_in.jsonl ({"id", "source", "text"}), ready for the VoxCPM2 runner.
 """
 
@@ -23,6 +24,8 @@ TEXTS = {
         ("mixed_v2", "distill_mixed_v2.txt", "mix2"),
         ("numbers_v2", "distill_numbers_v2.txt", "num2"),
     ],
+    # scripts/wiki_text.py; OpenSLR is used up after v2.
+    "v3": [("wiki_v3", "distill_wiki_v3.txt", "wiki3")],
 }
 
 
