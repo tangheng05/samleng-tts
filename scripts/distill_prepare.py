@@ -3,10 +3,13 @@
 uv run python scripts/distill_prepare.py prepare   # 22.05 kHz clips + voice similarity (CPU)
 uv run python scripts/distill_prepare.py asr       # ASR round trip, then filter + stats.md
 uv run python scripts/distill_prepare.py stats     # re-filter without re-running ASR
+uv run python scripts/distill_prepare.py retry --seed 1   # re-generate rejected clips, keep passing takes
+Add --version v2 for later batches (default v1).
 """
 
 import argparse
 import glob
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -22,6 +25,8 @@ RUN = OUTPUT_DIR / "distill" / "v1"
 TEACHER = RUN / "voxcpm2"
 CLIPS = DATA_DIR / "distill" / "v1" / "clips"
 MANIFEST = RUN / "manifest.jsonl"
+# The voice target is the same for every batch.
+REFERENCE = OUTPUT_DIR / "distill" / "v1" / "reference.wav"
 # The runner was started from its own folder, so its audio paths are relative to it.
 RUNNER_DIR = ROOT / "runners" / "tts_voxcpm"
 
@@ -30,9 +35,39 @@ def voice_profile(enc: SpeakerEncoder) -> np.ndarray:
     clips = sorted(
         glob.glob(str(OUTPUT_DIR / "baseline/khmertts_bench_v1/sengtha/pure-*.wav"))
     )[:10]
-    embs = [enc.embed(p) for p in [*clips, RUN / "reference.wav"]]
+    embs = [enc.embed(p) for p in [*clips, REFERENCE]]
     unit = np.mean([e / np.linalg.norm(e) for e in embs], axis=0)
     return unit / np.linalg.norm(unit)
+
+
+def clip(teacher_audio: str, out: Path, enc: SpeakerEncoder, profile) -> dict:
+    """Resample/trim/level one teacher clip and measure its voice similarity."""
+    y, sr = sf.read((RUNNER_DIR / teacher_audio).resolve())
+    y = prepare_audio(y, sr)
+    sf.write(out, y, TARGET_SR, subtype="PCM_16")
+    e = enc.embed(out)
+    return {
+        "audio": str(out),
+        "seconds": round(len(y) / TARGET_SR, 3),
+        "spk": round(float(e @ profile / np.linalg.norm(e)), 4),
+    }
+
+
+def transcribe(rows: list[dict], name: str) -> dict[str, str]:
+    asr_in, asr_out = RUN / f"{name}_in.jsonl", RUN / f"{name}_out.jsonl"
+    write_jsonl(asr_in, [{"id": r["id"], "audio": r["audio"]} for r in rows])
+    run("asr_qwen", "transcribe.py", asr_in, asr_out)
+    return {r["id"]: r["text"] for r in read_jsonl(asr_out)}
+
+
+def score(r: dict) -> None:
+    r["cer"] = round(khmer_cer(r["text"], r["asr"]), 4)
+    r["cps"] = round(len(normalize_khmer(r["text"])) / r["seconds"], 2)
+
+
+def rate_window(rows: list[dict]) -> tuple[float, float]:
+    cps = [r["cps"] for r in rows]
+    return float(np.percentile(cps, 1)), float(np.percentile(cps, 99))
 
 
 def prepare() -> None:
@@ -42,21 +77,10 @@ def prepare() -> None:
     CLIPS.mkdir(parents=True, exist_ok=True)
     rows = []
     for r in read_jsonl(TEACHER / "results.jsonl"):
-        y, sr = sf.read((RUNNER_DIR / r["audio"]).resolve())
-        y = prepare_audio(y, sr)
-        audio = CLIPS / f"{r['id']}.wav"
-        sf.write(audio, y, TARGET_SR, subtype="PCM_16")
-        e = enc.embed(audio)
         src = texts[r["id"]]
         rows.append(
-            {
-                "id": r["id"],
-                "source": src["source"],
-                "text": src["text"],
-                "audio": str(audio),
-                "seconds": round(len(y) / TARGET_SR, 3),
-                "spk": round(float(e @ profile / np.linalg.norm(e)), 4),
-            }
+            {"id": r["id"], "source": src["source"], "text": src["text"]}
+            | clip(r["audio"], CLIPS / f"{r['id']}.wav", enc, profile)
         )
     write_jsonl(MANIFEST, rows)
     print(
@@ -66,10 +90,7 @@ def prepare() -> None:
 
 def asr() -> None:
     rows = read_jsonl(MANIFEST)
-    asr_in, asr_out = RUN / "asr_in.jsonl", RUN / "asr_out.jsonl"
-    write_jsonl(asr_in, [{"id": r["id"], "audio": r["audio"]} for r in rows])
-    run("asr_qwen", "transcribe.py", asr_in, asr_out)
-    hyp = {r["id"]: r["text"] for r in read_jsonl(asr_out)}
+    hyp = transcribe(rows, "asr")
     for r in rows:
         r["asr"] = hyp[r["id"]]
     write_jsonl(MANIFEST, rows)
@@ -79,10 +100,8 @@ def asr() -> None:
 def stats() -> None:
     rows = read_jsonl(MANIFEST)
     for r in rows:
-        r["cer"] = round(khmer_cer(r["text"], r["asr"]), 4)
-        r["cps"] = round(len(normalize_khmer(r["text"])) / r["seconds"], 2)
-    cps = [r["cps"] for r in rows]
-    rate = (float(np.percentile(cps, 1)), float(np.percentile(cps, 99)))
+        score(r)
+    rate = rate_window(rows)
     for r in rows:
         r.pop("reject", None)
         if reason := distill_reject(r, rate):
@@ -91,7 +110,7 @@ def stats() -> None:
     df = pd.DataFrame(rows)
     kept = df[df["reject"].isna()] if "reject" in df else df
     lines = [
-        "# Distillation v1 (VoxCPM2 → sengtha's voice)",
+        f"# Distillation {RUN.name} (VoxCPM2 → sengtha's voice)",
         f"- clips: {len(df)}, kept: {len(kept)}, hours kept: {kept['seconds'].sum() / 3600:.2f}",
         f"- speaking-rate window (chars/s, p1–p99): {rate[0]:.1f}–{rate[1]:.1f}",
         "## Rejected",
@@ -106,11 +125,73 @@ def stats() -> None:
     print((RUN / "stats.md").read_text())
 
 
+def retry(seed: int) -> None:
+    """Re-generate rejected clips with another seed; a take that passes replaces the reject.
+
+    Hard sentences fail most often, so dropping them would bias the data toward easy ones.
+    """
+    rows = read_jsonl(MANIFEST)
+    bad = [r for r in rows if "reject" in r]
+    if not bad:
+        print("nothing to retry")
+        return
+    tag = f"seed{seed}"
+    texts = {r["id"]: r["text"] for r in read_jsonl(RUN / "tts_in.jsonl")}
+    take_in, take_dir = RUN / f"retry_{tag}.jsonl", RUN / f"voxcpm2_{tag}"
+    write_jsonl(take_in, [{"id": r["id"], "text": texts[r["id"]]} for r in bad])
+    run(
+        "tts_voxcpm",
+        "synthesize.py",
+        take_in,
+        take_dir,
+        "--reference-wav",
+        REFERENCE,
+        "--seed",
+        str(seed),
+        "--resume",
+    )
+    enc = SpeakerEncoder()
+    profile = voice_profile(enc)
+    CLIPS.mkdir(parents=True, exist_ok=True)
+    by_id = {r["id"]: r for r in rows}
+    takes = [
+        {
+            **by_id[t["id"]],
+            **clip(t["audio"], CLIPS / f"{t['id']}.{tag}.wav", enc, profile),
+        }
+        for t in read_jsonl(take_dir / "results.jsonl")
+    ]
+    hyp = transcribe(takes, f"retry_{tag}_asr")
+    rate = rate_window(rows)
+    fixed = 0
+    for t in takes:
+        t["asr"] = hyp[t["id"]]
+        score(t)
+        t.pop("reject", None)
+        if distill_reject(t, rate) is None:
+            by_id[t["id"]].clear()
+            by_id[t["id"]].update(t | {"take": tag})
+            fixed += 1
+    write_jsonl(MANIFEST, rows)
+    print(f"{tag}: {fixed} of {len(takes)} rejected clips replaced by a passing take")
+    stats()
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    steps = {"prepare": prepare, "asr": asr, "stats": stats}
+    steps = {"prepare": prepare, "asr": asr, "stats": stats, "retry": retry}
     ap.add_argument("step", choices=steps)
-    steps[ap.parse_args().step]()
+    ap.add_argument("--version", default="v1")
+    ap.add_argument(
+        "--seed", type=int, default=1, help="retry: teacher seed (first run used 0)"
+    )
+    args = ap.parse_args()
+    global RUN, TEACHER, CLIPS, MANIFEST
+    RUN = OUTPUT_DIR / "distill" / args.version
+    TEACHER = RUN / "voxcpm2"
+    CLIPS = DATA_DIR / "distill" / args.version / "clips"
+    MANIFEST = RUN / "manifest.jsonl"
+    steps[args.step](args.seed) if args.step == "retry" else steps[args.step]()
 
 
 if __name__ == "__main__":

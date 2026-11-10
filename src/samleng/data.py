@@ -134,7 +134,7 @@ def distill_reject(
     """
     if row["spk"] < min_spk:
         return "voice"
-    limit = max_cer_mixed if row["source"] == "mixed_v1" else max_cer
+    limit = max_cer_mixed if row["source"].startswith("mixed") else max_cer
     if row["cer"] > limit:
         return "misread"
     if not rate[0] <= row["cps"] <= rate[1]:
