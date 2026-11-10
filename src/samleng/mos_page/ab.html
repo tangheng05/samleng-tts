@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Samleng listening test: which sounds better?</title>
+<style>
+  :root {
+    --paper: #ECEFE8; --surface: #F6F8F3; --ink: #1C2A2E; --muted: #5D6B69;
+    --line: #C9D0C6; --played: #2E6B58; --gilt: #B8901F;
+    --ui: "Avenir Next", Avenir, system-ui, sans-serif;
+    --khmer: "Khmer Sangam MN", "Noto Sans Khmer", "Khmer MN", var(--ui);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #162024; --surface: #1D292E; --ink: #E4E9E2; --muted: #97A5A1;
+      --line: #33434A; --played: #6FB59C; --gilt: #E0BD4E; color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--paper); color: var(--ink);
+         font: 400 17px/1.5 var(--ui); -webkit-font-smoothing: antialiased; }
+  main { max-width: 44rem; margin: 0 auto; padding: 3rem 1.5rem; }
+  [hidden] { display: none !important; }
+  h1 { font-weight: 600; font-size: 1.6rem; line-height: 1.2; margin: 0 0 .75rem; }
+  p { margin: 0 0 1rem; }
+  .km { font-family: var(--khmer); }
+  .muted { color: var(--muted); }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--gilt); outline-offset: 3px; }
+  .primary { border: 0; border-radius: 999px; padding: .75rem 1.6rem; background: var(--ink);
+             color: var(--paper); font-weight: 600; cursor: pointer; }
+  .primary:disabled { opacity: .4; cursor: default; }
+  input[type=text] { padding: .6rem .8rem; border: 1px solid var(--line); border-radius: 8px;
+                     background: var(--surface); width: 100%; max-width: 20rem; }
+  .sentence { font-family: var(--khmer); font-size: 1.35rem; line-height: 1.8;
+              padding: 1rem 1.2rem; background: var(--surface); border-radius: 12px; margin: 1rem 0 1.5rem; }
+  .players { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  .play { border: 2px solid var(--line); border-radius: 12px; background: var(--surface); padding: 1rem;
+          cursor: pointer; font-weight: 600; text-align: center; }
+  .play.done { border-color: var(--played); }
+  .play.playing { border-color: var(--gilt); }
+  .scale { display: grid; grid-template-columns: repeat(7, 1fr); gap: .35rem; }
+  .scale button { border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+                  padding: .55rem .2rem; cursor: pointer; font-size: .78rem; line-height: 1.25; min-height: 4.6rem; }
+  .scale button b { display: block; font-size: 1.05rem; }
+  .scale button:disabled { opacity: .35; cursor: default; }
+  .scale button.picked { background: var(--ink); color: var(--paper); }
+  .bar { height: 4px; background: var(--line); border-radius: 2px; margin: 1.5rem 0 .5rem; }
+  .bar span { display: block; height: 100%; background: var(--played); border-radius: 2px; }
+  .row { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; }
+  @media (max-width: 34rem) { .scale { grid-template-columns: repeat(4, 1fr); } }
+</style>
+</head>
+<body>
+<main>
+  <section id="intro">
+    <h1>Which voice sounds better?</h1>
+    <p class="km">សូមស្តាប់សំឡេងទាំងពីរ ហើយប្រាប់ថា សំឡេងទីពីរ ល្អជាង ឬអាក្រក់ជាង សំឡេងទីមួយ ប៉ុណ្ណា។</p>
+    <p>For each sentence, play <b>both</b> voices to the end, then say how the <b>second</b> one
+       compares to the first. Judge how natural and correct it sounds as Khmer, including any
+       English words. Use headphones in a quiet place. Your answers save as you go.</p>
+    <p><label for="rater">Your name or nickname</label><br>
+       <input type="text" id="rater" autocomplete="nickname"></p>
+    <button class="primary" id="start" disabled>Start</button>
+  </section>
+
+  <section id="task" hidden>
+    <div class="bar"><span id="progress"></span></div>
+    <p class="muted" id="count"></p>
+    <div class="sentence" id="text"></div>
+    <div class="players">
+      <button class="play" data-side="1">▶ First<br><span class="km">សំឡេងទីមួយ</span></button>
+      <button class="play" data-side="2">▶ Second<br><span class="km">សំឡេងទីពីរ</span></button>
+    </div>
+    <p><b>The second voice, compared to the first:</b> <span class="km">សំឡេងទីពីរ បើធៀបនឹងទីមួយ៖</span></p>
+    <div class="scale" id="scale"></div>
+    <p class="muted" id="hint">Play both voices to the end to answer.</p>
+    <div class="row">
+      <button class="primary" id="back">Back</button>
+      <span class="muted" id="saved"></span>
+    </div>
+  </section>
+
+  <section id="end" hidden>
+    <h1>Thank you!</h1>
+    <p class="km">អរគុណច្រើនសម្រាប់ជំនួយរបស់អ្នក។</p>
+    <p>All your answers are saved. You can close this page.</p>
+  </section>
+</main>
+<audio id="audio"></audio>
+<script>
+const LABELS = [
+  [-3, "Much worse", "អាក្រក់ជាងច្រើន"], [-2, "Worse", "អាក្រក់ជាង"],
+  [-1, "Slightly worse", "អាក្រក់ជាងបន្តិច"], [0, "About the same", "ប្រហែលគ្នា"],
+  [1, "Slightly better", "ល្អជាងបន្តិច"], [2, "Better", "ល្អជាង"], [3, "Much better", "ល្អជាងច្រើន"],
+];
+const $ = (id) => document.getElementById(id);
+const audio = $("audio");
+let rater = "", pairs = [], rated = {}, i = 0, heard = new Set();
+
+$("rater").value = localStorage.getItem("samleng-rater") || "";
+const ready = () => ($("start").disabled = !$("rater").value.trim());
+$("rater").addEventListener("input", ready); ready();
+
+const scale = $("scale");
+for (const [v, en, km] of LABELS) {
+  const b = document.createElement("button");
+  b.dataset.v = v;
+  b.innerHTML = `<b>${v > 0 ? "+" + v : v}</b>${en}<br><span class="km">${km}</span>`;
+  b.onclick = () => rate(v);
+  scale.append(b);
+}
+
+$("start").onclick = async () => {
+  rater = $("rater").value.trim();
+  localStorage.setItem("samleng-rater", rater);
+  const r = await fetch(`/api/pairs?rater=${encodeURIComponent(rater)}`).then((x) => x.json());
+  pairs = r.pairs; rated = r.rated;
+  i = pairs.findIndex((p) => !(p.pair in rated));
+  if (i < 0) return finish();
+  $("intro").hidden = true; $("task").hidden = false;
+  show();
+};
+
+function show() {
+  const p = pairs[i];
+  heard = new Set();
+  audio.pause();
+  $("text").textContent = p.text;
+  $("count").textContent = `${i + 1} of ${pairs.length}`;
+  $("progress").style.width = `${(100 * Object.keys(rated).length) / pairs.length}%`;
+  document.querySelectorAll(".play").forEach((b) => b.classList.remove("done", "playing"));
+  const prev = rated[p.pair];
+  scale.querySelectorAll("button").forEach((b) => {
+    b.disabled = prev === undefined;
+    b.classList.toggle("picked", prev !== undefined && +b.dataset.v === prev);
+  });
+  $("hint").hidden = prev !== undefined;
+  $("back").disabled = i === 0;
+  $("saved").textContent = "";
+}
+
+document.querySelectorAll(".play").forEach((btn) => {
+  btn.onclick = () => {
+    const side = btn.dataset.side;
+    document.querySelectorAll(".play").forEach((b) => b.classList.remove("playing"));
+    btn.classList.add("playing");
+    audio.src = `/audio/${pairs[i].pair}/${side}`;
+    audio.onended = () => {
+      btn.classList.remove("playing"); btn.classList.add("done");
+      heard.add(side);
+      if (heard.size === 2) {
+        scale.querySelectorAll("button").forEach((b) => (b.disabled = false));
+        $("hint").hidden = true;
+      }
+    };
+    audio.play();
+  };
+});
+
+async function rate(v) {
+  const p = pairs[i];
+  const r = await fetch("/api/rate", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rater, pair: p.pair, score: v }),
+  });
+  if (!r.ok) { $("saved").textContent = "Could not save, please try again."; return; }
+  rated[p.pair] = v;
+  const next = pairs.findIndex((q, j) => j > i && !(q.pair in rated));
+  const any = pairs.findIndex((q) => !(q.pair in rated));
+  if (next >= 0) { i = next; show(); }
+  else if (any >= 0) { i = any; show(); }
+  else finish();
+}
+
+$("back").onclick = () => { if (i > 0) { i -= 1; show(); } };
+
+function finish() {
+  audio.pause();
+  $("intro").hidden = true; $("task").hidden = true; $("end").hidden = false;
+}
+</script>
+</body>
+</html>

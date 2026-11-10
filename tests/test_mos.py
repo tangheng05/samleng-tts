@@ -4,13 +4,17 @@ import pytest
 
 from samleng.bench import Item
 from samleng.mos import (
+    append_ccr,
     append_rating,
     build_clips,
+    build_pairs,
+    careless_raters,
     compare,
     load_ratings,
     merge_systems,
     order_for,
     summarize,
+    summarize_ccr,
 )
 
 ITEMS = [Item(f"mixed-0{i}", "mixed", f"text {i}") for i in range(1, 4)]
@@ -140,3 +144,49 @@ def test_normalize_loudness_never_clips():
     y = np.full(sr, 0.001)
     y[100] = 0.9
     assert np.abs(normalize_loudness(y, sr, target_db=-10.0)).max() <= 0.99
+
+
+def test_build_pairs_hides_systems_and_adds_checks(tmp_path):
+    systems = make_systems(tmp_path)
+    pairs = build_pairs(ITEMS, ("a", systems["a"]), ("b", systems["b"]), checks=1)
+    real = [p for p in pairs if not p.check]
+    assert len(real) == 3 and sum(p.check for p in pairs) == 1
+    assert all(len(p.pair) == 10 for p in pairs)
+    check = next(p for p in pairs if p.check)
+    assert check.first.audio == check.second.audio
+    # Order is random per pair but stable across runs.
+    again = build_pairs(ITEMS, ("a", systems["a"]), ("b", systems["b"]), checks=1)
+    assert [p.first.system for p in pairs] == [p.first.system for p in again]
+
+
+def test_ccr_scores_are_stored_as_a_versus_b(tmp_path):
+    systems = make_systems(tmp_path)
+    pairs = build_pairs(ITEMS, ("a", systems["a"]), ("b", systems["b"]), checks=0)
+    path = tmp_path / "ab.jsonl"
+    for p in pairs:
+        # The rater always prefers system a by 2, whichever side it was played on.
+        second_vs_first = 2 if p.second.system == "a" else -2
+        append_ccr(path, "r1", p, second_vs_first)
+    with pytest.raises(ValueError):
+        append_ccr(path, "r1", pairs[0], 4)
+    rows = summarize_ccr(load_ratings(path, key="pair"))
+    assert len(rows) == 1
+    row = rows[0]
+    assert (row["a"], row["b"], row["cmos"], row["a_better"], row["b_better"]) == (
+        "a",
+        "b",
+        2.0,
+        3,
+        0,
+    )
+
+
+def test_careless_raters_fail_identical_pairs(tmp_path):
+    systems = make_systems(tmp_path)
+    pairs = build_pairs(ITEMS, ("a", systems["a"]), ("b", systems["b"]), checks=2)
+    path = tmp_path / "ab.jsonl"
+    for p in pairs:
+        if p.check:
+            append_ccr(path, "careful", p, 0)
+            append_ccr(path, "careless", p, 3)
+    assert careless_raters(load_ratings(path, key="pair")) == {"careless"}

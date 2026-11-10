@@ -1,4 +1,8 @@
+import functools
+import io
+
 import numpy as np
+import soundfile as sf
 
 
 def normalize_loudness(y: np.ndarray, sr: int, target_db: float = -26.0) -> np.ndarray:
@@ -14,3 +18,18 @@ def normalize_loudness(y: np.ndarray, sr: int, target_db: float = -26.0) -> np.n
     gain = 10 ** ((target_db - level_db) / 20)
     peak = np.abs(y).max()
     return y * min(gain, 0.99 / peak)
+
+
+@functools.cache
+def leveled_wav(path) -> bytes:
+    """A mono 16-bit WAV of the file, loudness-normalized, for listening tests."""
+    y, sr = sf.read(path, always_2d=False)
+    buf = io.BytesIO()
+    sf.write(
+        buf,
+        normalize_loudness(y if y.ndim == 1 else y.mean(axis=1), sr),
+        sr,
+        format="WAV",
+        subtype="PCM_16",
+    )
+    return buf.getvalue()

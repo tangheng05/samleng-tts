@@ -7,8 +7,6 @@ uv run python scripts/mos.py report --study mixed_v0 \
 """
 
 import argparse
-import functools
-import io
 import json
 import threading
 import webbrowser
@@ -17,9 +15,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
-import soundfile as sf
 
-from samleng.audio import normalize_loudness
+from samleng.audio import leveled_wav
 from samleng.bench import load_bench
 from samleng.mos import (
     PAGE,
@@ -43,20 +40,6 @@ PROTOCOL = """\
 - p is a paired Wilcoxon signed-rank test over the sentences both systems share.
 - Clips are loudness-normalized to -26 dB active speech level; native sample rates kept.
 - MOS values are only comparable within this study."""
-
-
-@functools.cache
-def leveled_wav(path):
-    y, sr = sf.read(path, always_2d=False)
-    buf = io.BytesIO()
-    sf.write(
-        buf,
-        normalize_loudness(y if y.ndim == 1 else y.mean(axis=1), sr),
-        sr,
-        format="WAV",
-        subtype="PCM_16",
-    )
-    return buf.getvalue()
 
 
 def make_handler(clips, ratings_path):
