@@ -15,6 +15,11 @@ mkdir -p $Q/{pending,running,done,failed,logs}
 
 busy() { pgrep -f "train_vits/train.py|python train.py|tts_voxcpm/synthesize.py|distill_prepare.py" >/dev/null }
 log() { print -r -- "$(date '+%F %T') $*" >> $Q/queue.log }
+# Phone alert via ntfy; the private topic lives in ~/samleng-ops/ntfy_topic (never in the repo).
+notify() {
+  local topic=$(cat ~/samleng-ops/ntfy_topic 2>/dev/null)
+  [[ -n $topic ]] && curl -s -m 15 -o /dev/null -H "Title: $1" -H "Priority: ${3:-default}" -H "Tags: ${4:-gear}" -d "$2" "https://ntfy.sh/$topic"
+}
 
 log "runner started (pid $$)"
 while true; do
@@ -35,14 +40,18 @@ while true; do
   j=$job[1]
   name=${j:t:r}
   log "start $name"
+  notify "Started: $name" "$(head -1 $j | sed 's/^# //')" low
   caffeinate -is /bin/zsh $j >> $Q/logs/$name.log 2>&1
   rc=$?
   if (( rc == 0 )); then
     mv $j $Q/done/
     log "done $name"
+    next_job=$(ls $Q/pending 2>/dev/null | head -1)
+    notify "Finished: $name" "Next: ${next_job:-nothing queued}" default white_check_mark
   else
     mv $j $Q/failed/
     print -r -- "$name exited $rc at $(date '+%F %T')" > $Q/PAUSED
     log "FAILED $name (exit $rc), queue paused"
+    notify "FAILED: $name" "Exit $rc. The queue is paused; ask Claude to check. Last log line: $(tail -1 $Q/logs/$name.log | cut -c1-200)" high rotating_light
   fi
 done

@@ -122,6 +122,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("run_dir", type=Path)
     ap.add_argument("--step", type=int, help="default: newest checkpoint")
+    ap.add_argument(
+        "--notify", action="store_true", help="send a phone progress update"
+    )
     args = ap.parse_args()
 
     ckpts = checkpoints(args.run_dir)
@@ -142,6 +145,7 @@ def main() -> None:
     table = compare_to_base(pd.concat(frames, ignore_index=True), "base", mixed_cer)
     table["order"] = table["system"].str.removeprefix("step").astype(int)
     table = table.sort_values(["category", "order"]).drop(columns="order")
+    rows = table.to_dict("records")
     table["p"] = table["p"].map("{:.2g}".format)
     text = (
         f"# {name}: checkpoints vs base sengtha (bench v1, verbalized)\n\n"
@@ -161,15 +165,21 @@ def main() -> None:
     ):
         if d.name.isdigit() and (g := guard(d, enc)) is not None:
             guards[f"step{d.name}"] = g
-    if guards["base"] is not None:
+    gt = guard_table(guards) if guards["base"] is not None else None
+    if gt is not None:
         text += (
             "\n## Guardrails (vs base; flags: voice similarity drop > 0.03, speed outside "
-            "0.9–1.1×, clipping)\n\n"
-            + guard_table(guards).to_markdown(index=False)
-            + "\n"
+            "0.9–1.1×, clipping)\n\n" + gt.to_markdown(index=False) + "\n"
         )
     (EVAL / name / "summary.md").write_text(text, encoding="utf-8")
     print(text)
+    if args.notify:
+        from samleng.notify import checkpoint_message, send
+
+        run = name.removeprefix("distill_").replace("_", "-")
+        g = {} if gt is None else {r["system"]: r for r in gt.to_dict("records")}
+        title, body = checkpoint_message(run, step, rows, g)
+        send(title, body, tags="chart_with_upwards_trend")
 
 
 if __name__ == "__main__":
