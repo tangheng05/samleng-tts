@@ -51,6 +51,17 @@ def test_gemini_request_matches_ai_tutor():
     assert voice["prebuiltVoiceConfig"]["voiceName"] == "Callirrhoe"
 
 
+def test_gemini38_uses_its_model_with_the_same_voice():
+    build = api.SYSTEMS["gemini38_tts"][0]
+    url, _, body = build("សួស្តី", ENV)
+    assert url.endswith("/models/gemini-3.8-flash-tts:generateContent")
+    cfg = json.loads(body)
+    assert cfg["contents"][0]["parts"][0]["text"] == "សួស្តី"
+    voice = cfg["generationConfig"]["speechConfig"]["voiceConfig"]
+    assert voice["prebuiltVoiceConfig"]["voiceName"] == "Callirrhoe"
+    assert api.SYSTEMS["gemini38_tts"][1] != api.SYSTEMS["gemini_tts"][1]
+
+
 def test_gemini_audio_decodes_pcm_and_flags_empty_replies():
     assert np.array_equal(api.gemini_audio(gemini_reply()), PCM)
     with pytest.raises(api.ApiError) as e:

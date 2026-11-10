@@ -6,6 +6,7 @@ including the network.
 """
 
 import base64
+import functools
 import hashlib
 import io
 import json
@@ -23,6 +24,7 @@ import soundfile as sf
 from samleng.bench import Item
 
 GEMINI_MODEL = "gemini-2.5-flash-preview-tts"
+GEMINI38_MODEL = "gemini-3.8-flash-tts"
 GEMINI_VOICE = "Callirrhoe"
 # Without this prefix the model answers the text instead of reading it.
 GEMINI_STYLE = "Say in a warm, friendly voice: "
@@ -63,17 +65,19 @@ def _need(env: dict, key: str) -> str:
     return env[key]
 
 
-def gemini_request(text: str, env: dict) -> tuple[str, dict, bytes]:
+def gemini_request(
+    text: str, env: dict, model: str = GEMINI_MODEL, style: str = GEMINI_STYLE
+) -> tuple[str, dict, bytes]:
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{GEMINI_MODEL}:generateContent"
+        f"{model}:generateContent"
     )
     headers = {
         "x-goog-api-key": _need(env, "GEMINI_API_KEY"),
         "Content-Type": "application/json",
     }
     body = {
-        "contents": [{"parts": [{"text": GEMINI_STYLE + text}]}],
+        "contents": [{"parts": [{"text": style + text}]}],
         "generationConfig": {
             "responseModalities": ["AUDIO"],
             "speechConfig": {
@@ -117,13 +121,18 @@ def azure_audio(reply: bytes) -> tuple[np.ndarray, int]:
 
 
 def _decode(system: str, reply: bytes) -> tuple[np.ndarray, int]:
-    if system == "gemini_tts":
+    if system.startswith("gemini"):
         return gemini_audio(reply), GEMINI_SR
     return azure_audio(reply)
 
 
 SYSTEMS = {
     "gemini_tts": (gemini_request, f"{GEMINI_MODEL}|{GEMINI_VOICE}|{GEMINI_STYLE}"),
+    "gemini38_tts": (
+        # 3.8 reads a style prefix aloud and refuses system instructions.
+        functools.partial(gemini_request, model=GEMINI38_MODEL, style=""),
+        f"{GEMINI38_MODEL}|{GEMINI_VOICE}|",
+    ),
     "azure_km": (azure_request, f"{AZURE_VOICE}|{AZURE_RATE}|{AZURE_FORMAT}"),
 }
 
