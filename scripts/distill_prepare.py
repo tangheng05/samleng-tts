@@ -9,6 +9,7 @@ Add --version v2 for later batches (default v1).
 
 import argparse
 import glob
+import json
 from pathlib import Path
 
 import numpy as np
@@ -25,17 +26,26 @@ RUN = OUTPUT_DIR / "distill" / "v1"
 TEACHER = RUN / "voxcpm2"
 CLIPS = DATA_DIR / "distill" / "v1" / "clips"
 MANIFEST = RUN / "manifest.jsonl"
-# The voice target is the same for every batch.
-REFERENCE = OUTPUT_DIR / "distill" / "v1" / "reference.wav"
+# Default voice target (sengtha). A batch can name another voice in <batch>/voice.json:
+# {"name": ..., "reference": <wav>, "profile": <glob of clips in that voice>}, paths under outputs/.
+SENGTHA = {
+    "name": "sengtha",
+    "reference": "distill/v1/reference.wav",
+    "profile": "baseline/khmertts_bench_v1/sengtha/pure-*.wav",
+}
 # The runner was started from its own folder, so its audio paths are relative to it.
 RUNNER_DIR = ROOT / "runners" / "tts_voxcpm"
 
 
+def voice() -> dict:
+    f = RUN / "voice.json"
+    return json.loads(f.read_text()) if f.exists() else SENGTHA
+
+
 def voice_profile(enc: SpeakerEncoder) -> np.ndarray:
-    clips = sorted(
-        glob.glob(str(OUTPUT_DIR / "baseline/khmertts_bench_v1/sengtha/pure-*.wav"))
-    )[:10]
-    embs = [enc.embed(p) for p in [*clips, REFERENCE]]
+    v = voice()
+    clips = sorted(glob.glob(str(OUTPUT_DIR / v["profile"])))[:10]
+    embs = [enc.embed(p) for p in [*clips, OUTPUT_DIR / v["reference"]]]
     unit = np.mean([e / np.linalg.norm(e) for e in embs], axis=0)
     return unit / np.linalg.norm(unit)
 
@@ -110,7 +120,7 @@ def stats() -> None:
     df = pd.DataFrame(rows)
     kept = df[df["reject"].isna()] if "reject" in df else df
     lines = [
-        f"# Distillation {RUN.name} (VoxCPM2 → sengtha's voice)",
+        f"# Distillation {RUN.name} (VoxCPM2 → {voice()['name']}'s voice)",
         f"- clips: {len(df)}, kept: {len(kept)}, hours kept: {kept['seconds'].sum() / 3600:.2f}",
         f"- speaking-rate window (chars/s, p1–p99): {rate[0]:.1f}–{rate[1]:.1f}",
         "## Rejected",
@@ -145,7 +155,7 @@ def retry(seed: int) -> None:
         take_in,
         take_dir,
         "--reference-wav",
-        REFERENCE,
+        OUTPUT_DIR / voice()["reference"],
         "--seed",
         str(seed),
         "--resume",
