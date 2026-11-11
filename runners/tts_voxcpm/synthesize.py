@@ -58,10 +58,12 @@ def main() -> None:
             if it["id"] in done:
                 continue
             # Per-item seed: same audio for a sentence regardless of run order.
-            torch.manual_seed(args.seed)
+            torch.manual_seed(it.get("seed", args.seed))
+            # Voice design: an optional description like "young female teacher" in front.
+            text = f"({it['control']}){it['text']}" if it.get("control") else it["text"]
             t = time.time()
             wav = model.generate(
-                text=it["text"],
+                text=text,
                 cfg_value=args.cfg,
                 inference_timesteps=args.steps,
                 **extra,
