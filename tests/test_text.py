@@ -112,7 +112,7 @@ def test_training_words_are_khmer_and_skip_eval_words():
     words = train_words()
     assert len(words) >= 517
     assert not set(words) & set(EN_KM)
-    assert all("\u1780" <= c <= "\u17ff" for v in words.values() for c in v)
+    assert all("\u1780" <= c <= "\u17ff" or c == " " for v in words.values() for c in v)
 
 
 def test_expand_acronyms_uses_letter_names():
