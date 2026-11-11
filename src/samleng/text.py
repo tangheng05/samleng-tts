@@ -9,6 +9,7 @@ import tha.decimals
 import tha.normalize
 import tha.phone_numbers
 
+from samleng.en2km import spell_letters
 from samleng.paths import ROOT
 
 # Order matters: specific patterns (dates, phones, money) before bare numbers.
@@ -206,6 +207,19 @@ def english_spans(text: str) -> list[tuple[str, str]]:
     return [
         (m[1], EN_KM[m[1].lower()]) for m in _pattern(frozenset(EN_KM)).finditer(text)
     ]
+
+
+_ACRONYM = re.compile(r"(?<![A-Za-z0-9])[A-Z]{2,6}(?![A-Za-z0-9])")
+
+
+def expand_acronyms(text: str) -> str:
+    """Write all-caps abbreviations in Khmer script (AI → អេអាយ) before TTS.
+
+    The model lowercases its input, so the capitals are the only hint to spell a word out.
+    Owner-approved spellings win (RAM → រ៉ែម is said as a word); others get letter names.
+    """
+    words = {**EN_KM, **train_words()}
+    return _ACRONYM.sub(lambda m: words.get(m[0].lower()) or spell_letters(m[0]), text)
 
 
 def transliterate(text: str, words: dict[str, str] = EN_KM) -> str:

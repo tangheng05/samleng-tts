@@ -1,4 +1,4 @@
-from samleng.text import EN_KM, train_words, transliterate, verbalize
+from samleng.text import EN_KM, expand_acronyms, train_words, transliterate, verbalize
 
 
 def test_khmer_digits_are_spelled_out():
@@ -113,3 +113,12 @@ def test_training_words_are_khmer_and_skip_eval_words():
     assert len(words) >= 517
     assert not set(words) & set(EN_KM)
     assert all("\u1780" <= c <= "\u17ff" for v in words.values() for c in v)
+
+
+def test_expand_acronyms_uses_letter_names():
+    # The model lowercases text, so "AI" would read like the word "ai" without this.
+    assert expand_acronyms("ក្រុមហ៊ុនប្រើ AI ដើម្បីជួយ") == "ក្រុមហ៊ុនប្រើ អេអាយ ដើម្បីជួយ"
+    assert expand_acronyms("RAM 8GB") == f"{train_words()['ram']} 8GB"
+    assert expand_acronyms("ChatGPT") == "ChatGPT"
+    assert expand_acronyms("GPT") == "ជីភីធី"
+    assert expand_acronyms("I like Facebook") == "I like Facebook"
