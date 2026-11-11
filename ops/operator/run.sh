@@ -4,6 +4,8 @@ export PATH=$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin
 export LC_ALL=en_US.UTF-8
 cd ~/code/samleng-tts
 mkdir -p ~/samleng-ops/runs
+# Also started at login: after a crash, give the network a moment before checking.
+(( $(sysctl -n kern.boottime | sed -E "s/^{ sec = ([0-9]+),.*/\1/") > $(date +%s) - 900 )) && sleep 120
 claude -p "Do your scheduled operator check now, following your instructions." \
   --append-system-prompt-file ~/samleng-ops/OPERATOR.md \
   --settings ~/samleng-ops/settings.json \

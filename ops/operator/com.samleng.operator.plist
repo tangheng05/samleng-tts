@@ -12,7 +12,7 @@
   <key>StartInterval</key>
   <integer>7200</integer>
   <key>RunAtLoad</key>
-  <false/>
+  <true/>
   <key>StandardOutPath</key>
   <string>/Users/mac/samleng-ops/launchd.log</string>
   <key>StandardErrorPath</key>
