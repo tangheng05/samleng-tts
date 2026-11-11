@@ -25,15 +25,17 @@ every ~2 hours, unattended. Be brief and careful. When unsure, do nothing and re
   lower is better; mixed_unseen = English words never seen in training). Scoring watcher for run v1-A:
   ~/code/samleng-tts/outputs/train/eval/watch_mini.sh (log outputs/logs/watch_mini.log).
 
-## Known state (written by the manager; trust it; updated 2026-11-11 09:30)
-- Run v1-A is finished (step ~17,300). Its scored checkpoints are kept in
-  ~/code/samleng-tts/outputs/train/keep/distill_v1_A/. Its step-16000 "speed drift" flag and the late
-  numbers wobble (2.6 → 4.2 → 5.8 → 2.5) are reviewed: do not raise them again.
-- Queue order: 010 v1-A wrap-up → 020 v2 teacher audio (VoxCPM2, ~6–12 h; progress = lines in
-  ~/code/samleng-tts/outputs/distill/v2/voxcpm2/results.jsonl, 2,275 clips in total) → 025 voice candidates (12 short clips in outputs/voice/candidates, ~10 min,
-  for the owner to pick a new teacher voice) → 030 v2 checks → 040 variant B
-  training (~6 h; it starts its own scoring watcher ops/watch_run.sh, log outputs/logs/watch_B.log; summary
-  outputs/train/eval/distill_v1_B/summary.md) → 050 retry v2 rejects → 060 v3 audio (3,000 clips, ~14 h) → 070 v3 checks.
+## Known state (written by the manager; trust it; updated 2026-11-11 14:30)
+- Run v1-A is finished; the owner picked step 17000 by ear (scored: ALL 6.7, speed 0.90, ok). Its kept
+  checkpoints are in ~/code/samleng-tts/outputs/train/keep/distill_v1_A/. Old v1-A flags/wobbles are reviewed.
+- The owner picked a NEW teacher voice ("clear", reference outputs/voice/teacher_clear.wav). Old-voice jobs
+  050/060/070 were moved to ~/samleng-jobs/skipped/ on purpose: do not re-queue them.
+- Queue order: 040 variant B training (~6 h, sengtha-voice data on purpose, for a fair A vs B comparison; it
+  starts its scoring watcher ops/watch_run.sh, log outputs/logs/watch_B.log, summary
+  outputs/train/eval/distill_v1_B/summary.md) → 050 gen v1c (1,500 clips) → 051 checks v1c → 052 gen v2c (2,275)
+  → 053 checks v2c → 054 gen v3c (3,060) → 055 checks v3c. Generation progress = lines in
+  ~/code/samleng-tts/outputs/distill/<batch>/voxcpm2/results.jsonl. The vNc batches check clips against the new
+  voice (their voice.json); a low voice similarity there vs sengtha is expected.
 - A stall for audio generation = results.jsonl not growing for 1+ hour while its process exists: report it under
   NEEDS MANAGER (do not kill VoxCPM2; only the 2-hour rule for train.py applies).
 - The Mac mini runs a macOS beta and crashed once (11-11 ~04:50); it now logs in and resumes by itself.
