@@ -29,8 +29,9 @@ every ~2 hours, unattended. Be brief and careful. When unsure, do nothing and re
 - Run v1-A is finished (step ~17,300). Its scored checkpoints are kept in
   ~/code/samleng-tts/outputs/train/keep/distill_v1_A/. Its step-16000 "speed drift" flag and the late
   numbers wobble (2.6 → 4.2 → 5.8 → 2.5) are reviewed: do not raise them again.
-- Queue order: 010 v1-A wrap-up → 020 v2 teacher audio (VoxCPM2, ~12 h; progress = lines in
-  ~/code/samleng-tts/outputs/distill/v2/voxcpm2/results.jsonl, 2,275 clips in total) → 030 v2 checks → 040 variant B
+- Queue order: 010 v1-A wrap-up → 020 v2 teacher audio (VoxCPM2, ~6–12 h; progress = lines in
+  ~/code/samleng-tts/outputs/distill/v2/voxcpm2/results.jsonl, 2,275 clips in total) → 025 voice candidates (12 short clips in outputs/voice/candidates, ~10 min,
+  for the owner to pick a new teacher voice) → 030 v2 checks → 040 variant B
   training (~6 h; it starts its own scoring watcher ops/watch_run.sh, log outputs/logs/watch_B.log; summary
   outputs/train/eval/distill_v1_B/summary.md) → 050 retry v2 rejects → 060 v3 audio (3,000 clips, ~14 h) → 070 v3 checks.
 - A stall for audio generation = results.jsonl not growing for 1+ hour while its process exists: report it under
