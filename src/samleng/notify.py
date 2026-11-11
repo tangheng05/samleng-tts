@@ -1,7 +1,7 @@
 """Phone alerts through ntfy.sh. The topic name is private and lives outside the repo."""
 
 import os
-import urllib.request
+import subprocess
 from pathlib import Path
 
 TOPIC_FILE = Path.home() / "samleng-ops" / "ntfy_topic"
@@ -16,16 +16,18 @@ def send(title: str, body: str, priority: str = "default", tags: str = "") -> bo
     )
     if not topic:
         return False
-    headers = {"Title": title.encode("utf-8"), "Priority": priority}
+    # curl, not urllib: curl falls back to IPv4 when IPv6 is broken (urllib just times out).
+    cmd = ["curl", "-s", "-m", "20", "-o", "/dev/null", "-w", "%{http_code}"]
+    cmd += ["-H", f"Title: {title}", "-H", f"Priority: {priority}"]
     if tags:
-        headers["Tags"] = tags
-    req = urllib.request.Request(
-        f"https://ntfy.sh/{topic}", data=body.encode("utf-8"), headers=headers
-    )
+        cmd += ["-H", f"Tags: {tags}"]
+    cmd += ["--data-binary", "@-", f"https://ntfy.sh/{topic}"]
     try:
-        urllib.request.urlopen(req, timeout=15).close()
-        return True
-    except OSError:
+        out = subprocess.run(
+            cmd, check=False, input=body.encode(), capture_output=True, timeout=30
+        )
+        return out.stdout.decode().strip() == "200"
+    except (OSError, subprocess.SubprocessError):
         return False
 
 
