@@ -13,7 +13,8 @@ claude -p "Do your scheduled operator check now, following your instructions." \
   < /dev/null > ~/samleng-ops/runs/$(date +%Y%m%d-%H%M).log 2>&1
 
 # Phone alert when the operator flags something new for the manager (not repeated every run).
-needs=$(sed -n '/NEEDS MANAGER/,$p' ~/samleng-ops/STATUS.md 2>/dev/null | tail -n +2 | grep -viE '^[[:space:]]*-?[[:space:]]*none[[:space:]]*$' | grep -v '^[[:space:]]*$' | head -5)
+# Only the section under the exact "## NEEDS MANAGER" heading (notes may mention the words).
+needs=$(awk '/^## NEEDS MANAGER/{f=1; next} /^## /{f=0} f' ~/samleng-ops/STATUS.md 2>/dev/null | grep -viE '^[[:space:]]*-?[[:space:]]*none[[:space:]]*$' | grep -v '^[[:space:]]*$' | head -5)
 if [[ -n $needs && $needs != "$(cat ~/samleng-ops/.last_needs 2>/dev/null)" ]]; then
   print -r -- "$needs" > ~/samleng-ops/.last_needs
   topic=$(cat ~/samleng-ops/ntfy_topic 2>/dev/null)

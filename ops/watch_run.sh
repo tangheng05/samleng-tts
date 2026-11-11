@@ -17,6 +17,8 @@ score_new() {
     [[ -f outputs/train/eval/$name/$s/results.csv ]] && continue
     echo "== step $s $(date)"
     nice -n 10 uv run python scripts/eval_checkpoint.py $run --step $s --notify
+    # Training keeps only its last 3 checkpoints; keep every scored one for the final pick.
+    mkdir -p outputs/train/keep/$name && cp -n $c outputs/train/keep/$name/
   done
 }
 
