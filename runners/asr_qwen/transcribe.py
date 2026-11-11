@@ -23,9 +23,10 @@ def main() -> None:
     ap.add_argument("manifest")
     ap.add_argument("out")
     ap.add_argument("--batch-size", type=int, default=8)
+    ap.add_argument("--device", help="cpu, mps or cuda:0 (default: best available)")
     args = ap.parse_args()
 
-    device = pick_device()
+    device = args.device or pick_device()
     model = Qwen3ASRModel.from_pretrained(
         MODEL_ID,
         dtype=torch.float32 if device == "cpu" else torch.float16,
