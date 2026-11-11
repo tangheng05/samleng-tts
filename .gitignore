@@ -28,3 +28,6 @@ ROADMAP.md
 CLAUDE.md
 CLAUDE.local.md
 .claude/
+
+# Night-shift operator config: private, kept on the MacBook and the Mac mini only
+ops/operator/
