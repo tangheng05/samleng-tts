@@ -25,7 +25,10 @@ TEXTS = {
         ("numbers_v2", "distill_numbers_v2.txt", "num2"),
     ],
     # scripts/wiki_text.py; OpenSLR is used up after v2.
-    "v3": [("wiki_v3", "distill_wiki_v3.txt", "wiki3")],
+    "v3": [
+        ("wiki_v3", "distill_wiki_v3.txt", "wiki3"),
+        ("mixed_acr_v3", "distill_acronyms_v3.txt", "acr3"),
+    ],
 }
 
 
