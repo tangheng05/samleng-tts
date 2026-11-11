@@ -29,6 +29,11 @@ TEXTS = {
         ("wiki_v3", "distill_wiki_v3.txt", "wiki3"),
         ("mixed_acr_v3", "distill_acronyms_v3.txt", "acr3"),
     ],
+    # Tutoring-style sentences (what AI-tutor says): praise, math, science, Khmer, English words.
+    "v4": [
+        ("tutor_v4", "distill_tutor_v4.txt", "tut4"),
+        ("mixed_tutor_v4", "distill_mixed_tutor_v4.txt", "mtut4"),
+    ],
 }
 
 
