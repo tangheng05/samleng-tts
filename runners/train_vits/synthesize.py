@@ -31,13 +31,19 @@ def main() -> None:
     ap.add_argument("--checkpoint")
     ap.add_argument("--config")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument(
+        "--length-scale",
+        type=float,
+        default=LENGTH_SCALE,
+        help="higher = slower speech",
+    )
     args = ap.parse_args()
 
     ckpt = args.checkpoint or hf_hub_download(REPO, "best_model.pth", revision=REV)
     cfg = args.config or hf_hub_download(REPO, "config.json", revision=REV)
     synth = Synthesizer(tts_checkpoint=ckpt, tts_config_path=cfg, use_cuda=False)
     model = synth.tts_model
-    model.length_scale = LENGTH_SCALE
+    model.length_scale = args.length_scale
     model.inference_noise_scale = NOISE_SCALE
     model.inference_noise_scale_dp = NOISE_SCALE_DP
     sr = synth.output_sample_rate
