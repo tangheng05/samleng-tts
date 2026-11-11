@@ -158,6 +158,8 @@ def retry(seed: int) -> None:
         OUTPUT_DIR / voice()["reference"],
         "--seed",
         str(seed),
+        "--hints",
+        ROOT / "texts/teacher_hints.json",
         "--resume",
     )
     enc = SpeakerEncoder()
