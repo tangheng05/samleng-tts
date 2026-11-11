@@ -117,8 +117,9 @@ def test_training_words_are_khmer_and_skip_eval_words():
 
 def test_expand_acronyms_uses_letter_names():
     # The model lowercases text, so "AI" would read like the word "ai" without this.
-    assert expand_acronyms("ក្រុមហ៊ុនប្រើ AI ដើម្បីជួយ") == "ក្រុមហ៊ុនប្រើ អេអាយ ដើម្បីជួយ"
+    assert expand_acronyms("ក្រុមហ៊ុនប្រើ AI ដើម្បីជួយ") == "ក្រុមហ៊ុនប្រើ អេ អាយ ដើម្បីជួយ"
     assert expand_acronyms("RAM 8GB") == f"{train_words()['ram']} 8GB"
     assert expand_acronyms("ChatGPT") == "ChatGPT"
-    assert expand_acronyms("GPT") == "ជីភីធី"
+    assert expand_acronyms("GPT") == "ជី ភី ធី"
+    assert expand_acronyms("KHQR") == "ខេ អេឆឹ ឃ្យូ អរ"
     assert expand_acronyms("I like Facebook") == "I like Facebook"

@@ -216,10 +216,18 @@ def expand_acronyms(text: str) -> str:
     """Write all-caps abbreviations in Khmer script (AI → អេអាយ) before TTS.
 
     The model lowercases its input, so the capitals are the only hint to spell a word out.
-    Owner-approved spellings win (RAM → រ៉ែម is said as a word); others get letter names.
+    Owner-approved word readings win (RAM → រ៉ែម); letter readings get a space between
+    letters, which the model reads as a short pause (clearer than running them together).
     """
     words = {**EN_KM, **train_words()}
-    return _ACRONYM.sub(lambda m: words.get(m[0].lower()) or spell_letters(m[0]), text)
+
+    def spell(m: re.Match) -> str:
+        approved = words.get(m[0].lower())
+        if approved and approved != spell_letters(m[0]):
+            return approved
+        return " ".join(spell_letters(c) for c in m[0])
+
+    return _ACRONYM.sub(spell, text)
 
 
 def transliterate(text: str, words: dict[str, str] = EN_KM) -> str:
