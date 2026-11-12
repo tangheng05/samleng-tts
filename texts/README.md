@@ -29,3 +29,8 @@ The v1 and v2 batches also read sentence text from [OpenSLR 42](https://openslr.
 | `teacher_hints.json` | Respellings for words the teacher mispronounces (e.g. a vowel-series error). Only the teacher's input is respelled; training text keeps the real spelling. |
 | `teacher_ear_rejects.txt` | Teacher clips a native listener rejected by ear (`<clip id> <note>`); they are left out of training and not retried automatically. |
 | `phrase_breaks.json` | Weights of the phrase-space model in `samleng.phrases`, learned from writers' spaces in Khmer Wikipedia by `scripts/phrase_breaks.py`. Optional tool; not applied to training text. |
+
+## License
+
+- Sentences written or generated for this project (every `distill_*` file except `distill_wiki_v3.txt`), the spelling list `en_km_train.json`, `teacher_hints.json` and `phrase_breaks.json`: [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/), credit "Samleng-TTS (Tang Heng)".
+- `distill_wiki_v3.txt`: sentences from Khmer Wikipedia, [CC-BY-SA-3.0](https://creativecommons.org/licenses/by-sa/3.0/) / GFDL, credit Wikipedia contributors.

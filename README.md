@@ -169,7 +169,7 @@ No voices are used without consent; the current voice is synthetic. Generated au
 
 ## License
 
-Code: MIT. Benchmark: CC-BY-4.0. Models and third-party datasets carry their own licenses (see the tables above); a model fine-tuned from sengtha is CC-BY-SA-4.0.
+Code: MIT. Benchmark and our own training sentences and spelling lists: CC-BY-4.0 (details in [`texts/README.md`](texts/README.md); the Wikipedia sentences stay CC-BY-SA-3.0). Models and third-party datasets carry their own licenses (see the tables above); a model fine-tuned from sengtha is CC-BY-SA-4.0.
 
 ## Citation
 
