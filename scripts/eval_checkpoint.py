@@ -25,7 +25,7 @@ import soundfile as sf
 from samleng.bench import load_bench
 from samleng.data import mixed_group
 from samleng.eval.cer import mixed_cer
-from samleng.eval.guard import guard_flags, signal_stats
+from samleng.eval.guard import guard_table, signal_stats
 from samleng.eval.report import compare_to_base
 from samleng.paths import OUTPUT_DIR, ROOT
 from samleng.runners import read_jsonl, run, same_settings, write_jsonl
@@ -97,45 +97,6 @@ def guard(out: Path, enc) -> pd.DataFrame | None:
     df = pd.DataFrame(rows)
     df.to_csv(out / "guard.csv", index=False)
     return df
-
-
-def speech(g: pd.DataFrame) -> pd.Series:
-    """Seconds of speech: clip length without the silence at both ends."""
-    return g["seconds"] - g["lead_silence_s"] - g["trail_silence_s"]
-
-
-def guard_table(
-    guards: dict[str, pd.DataFrame], voice: str = "base", pace: float = 1.0
-) -> pd.DataFrame:
-    """Voice similarity to the clips of `voice`, speech duration vs base, silence, clipping."""
-    base = guards["base"].set_index("id")
-    cols = [c for c in base.columns if c.startswith("e") and c[1:].isdigit()]
-    profile = guards[voice][cols].to_numpy().mean(axis=0)
-    profile /= np.linalg.norm(profile)
-    rows = []
-    for system, g in guards.items():
-        g = g.set_index("id")
-        spk = g[cols].to_numpy() @ profile
-        ratio = speech(g) / speech(base).loc[g.index]
-        rows.append(
-            {
-                "system": system,
-                "spk_median": round(float(np.median(spk)), 3),
-                "dur_ratio_median": round(float(ratio.median()), 3),
-                "lead_silence_s": round(float(g["lead_silence_s"].median()), 2),
-                "trail_silence_s": round(float(g["trail_silence_s"].median()), 2),
-                "clip_frac_p95": round(float(g["clip_frac"].quantile(0.95)), 5),
-            }
-        )
-    out = pd.DataFrame(rows)
-    target = out[out["system"] == voice].iloc[0].to_dict()
-    out["flags"] = [
-        "reference"
-        if r["system"] in ("base", voice)
-        else ", ".join(guard_flags(r, target, pace)) or "ok"
-        for r in out.to_dict("records")
-    ]
-    return out
 
 
 def main() -> None:

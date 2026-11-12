@@ -1,6 +1,7 @@
 """Guardrail checks next to CER: a checkpoint must not buy lower CER with a drifting voice or speed."""
 
 import numpy as np
+import pandas as pd
 
 # Frames quieter than this (dBFS) count as silence at the clip edges.
 SILENCE_DB = -45.0
@@ -43,3 +44,45 @@ def guard_flags(step: dict, voice: dict, pace: float = 1.0) -> list[str]:
     if step["clip_frac_p95"] > MAX_CLIP_FRAC:
         flags.append("clipping")
     return flags
+
+
+def speech_seconds(g: pd.DataFrame) -> pd.Series:
+    """Seconds of speech per clip: its length without the silence at both ends."""
+    return g["seconds"] - g["lead_silence_s"] - g["trail_silence_s"]
+
+
+def guard_table(
+    guards: dict[str, pd.DataFrame], voice: str = "base", pace: float = 1.0
+) -> pd.DataFrame:
+    """One row per system: voice similarity to `voice`, speech duration vs base, silence, clipping.
+
+    Each frame has one row per clip: id, seconds, the signal_stats columns and a unit speaker
+    embedding in columns e0..eN. `guards` must hold "base" and `voice`.
+    """
+    base = guards["base"].set_index("id")
+    cols = [c for c in base.columns if c.startswith("e") and c[1:].isdigit()]
+    profile = guards[voice][cols].to_numpy().mean(axis=0)
+    profile /= np.linalg.norm(profile)
+    rows = []
+    for system, g in guards.items():
+        g = g.set_index("id")
+        ratio = speech_seconds(g) / speech_seconds(base).loc[g.index]
+        rows.append(
+            {
+                "system": system,
+                "spk_median": round(float(np.median(g[cols].to_numpy() @ profile)), 3),
+                "dur_ratio_median": round(float(ratio.median()), 3),
+                "lead_silence_s": round(float(g["lead_silence_s"].median()), 2),
+                "trail_silence_s": round(float(g["trail_silence_s"].median()), 2),
+                "clip_frac_p95": round(float(g["clip_frac"].quantile(0.95)), 5),
+            }
+        )
+    out = pd.DataFrame(rows)
+    target = out[out["system"] == voice].iloc[0].to_dict()
+    out["flags"] = [
+        "reference"
+        if r["system"] in ("base", voice)
+        else ", ".join(guard_flags(r, target, pace)) or "ok"
+        for r in out.to_dict("records")
+    ]
+    return out
