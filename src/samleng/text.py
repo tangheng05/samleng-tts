@@ -26,7 +26,23 @@ _STEPS = (
 
 _PERIODS = ("ព្រឹក", "ថ្ងៃត្រង់", "រសៀល", "ល្ងាច", "យប់")
 _TIME = re.compile(r"(?<![\d:])(\d{1,2}):(\d{2})(?![\d:])(\s*)")
-# Two-part only, so dates like 14/04/2026 stay with the date reader.
+_MONTHS = (
+    "មករា",
+    "កុម្ភៈ",
+    "មីនា",
+    "មេសា",
+    "ឧសភា",
+    "មិថុនា",
+    "កក្កដា",
+    "សីហា",
+    "កញ្ញា",
+    "តុលា",
+    "វិច្ឆិកា",
+    "ធ្នូ",
+)
+_DAY_WORDS = ("ថ្ងៃទី", "ថ្ងៃ")
+_DATE = re.compile(r"(?<![\d/])(\d{1,2})/(\d{1,2})/(\d{4})(?![\d/])")
+# Two-part only, so 14/04/2026 is left to the date rule above.
 _FRACTION = re.compile(r"(?<![\d/])(\d+)/(\d+)(?![\d/])")
 # A hyphen is minus in sums; only a preceding score word makes it ទល់ (owner-confirmed).
 _SCORE = re.compile(r"(លទ្ធផល|ពិន្ទុ|ឈ្នះ|ចាញ់|ស្មើ)\s*(\d+)\s*-\s*(\d+)")
@@ -49,10 +65,26 @@ def _spoken_time(m: re.Match) -> str:
     return clock + period + space
 
 
+def _after_day_word(m: re.Match) -> bool:
+    return m.string[: m.start()].rstrip().endswith(_DAY_WORDS)
+
+
+def _date(m: re.Match) -> str:
+    # Owner (2026-11-12): 14/04/2026 is said "day 14, month Mesa, year 2026", not "14 4 2026".
+    day, month = int(m[1]), int(m[2])
+    if not (1 <= day <= 31 and 1 <= month <= 12):
+        return m[0]
+    lead = "" if _after_day_word(m) else "ថ្ងៃទី "
+    return f"{lead}{day} ខែ{_MONTHS[month - 1]} ឆ្នាំ {int(m[3])}"
+
+
 def _fraction(m: re.Match) -> str:
-    # After ថ្ងៃ/ថ្ងៃទី, 14/04 is a day and month: read it like a full date, minus the year.
-    if m.string[: m.start()].rstrip().endswith(("ថ្ងៃទី", "ថ្ងៃ")):
-        return f"{int(m[1])} {int(m[2])}"
+    # After ថ្ងៃ/ថ្ងៃទី, 14/04 is a day and month.
+    if _after_day_word(m):
+        day, month = int(m[1]), int(m[2])
+        if 1 <= day <= 31 and 1 <= month <= 12:
+            return f"{day} ខែ{_MONTHS[month - 1]}"
+        return f"{day} {month}"
     return f"{m[1]} ភាគ {m[2]}"
 
 
@@ -61,6 +93,7 @@ def verbalize(text: str) -> str:
     # Tha reads "25,000" as "25 comma 000"; Khmer uses "." for decimals.
     text = re.sub(r"(?<=\d),(?=\d{3}(?!\d))", "", text)
     text = _TIME.sub(_spoken_time, text)
+    text = _DATE.sub(_date, text)
     text = _FRACTION.sub(_fraction, text)
     text = _SCORE.sub(r"\1 \2 ទល់ \3", text)
     text = text.replace("%", " ភាគរយ").replace("°C", " អង្សាសេ")
@@ -233,3 +266,9 @@ def expand_acronyms(text: str) -> str:
 def transliterate(text: str, words: dict[str, str] = EN_KM) -> str:
     """Rewrite known English words in Khmer script, as Khmer speakers say them."""
     return _pattern(frozenset(words)).sub(lambda m: words[m[1].lower()], text)
+
+
+def khmer_script(text: str) -> str:
+    """Spoken form with every known English word in Khmer script (what variant B reads)."""
+    words = {**EN_KM, **train_words()}
+    return transliterate(expand_acronyms(verbalize(text)), words)

@@ -95,8 +95,21 @@ def test_every_english_word_in_bench_v1_mixed_has_a_spelling():
 def test_short_date_after_thngai_is_not_a_fraction():
     short = verbalize("ថ្ងៃទី 14/04 ជាថ្ងៃចូលឆ្នាំ។")
     assert "ភាគ" not in short and "/" not in short
-    full = verbalize("ថ្ងៃទី 14/04/2026 ជាថ្ងៃចូលឆ្នាំ។")
-    assert short.replace(" ", "") == full.replace(" ", "").replace("ពីរពាន់ម្ភៃប្រាំមួយ", "")
+    assert short.replace(" ", "").startswith("ថ្ងៃទីដប់បួនខែមេសា")
+
+
+def test_slash_dates_name_the_month_and_the_year():
+    full = verbalize("ថ្ងៃទី 14/04/2026 ជាថ្ងៃចូលឆ្នាំ។").replace(" ", "")
+    assert full.startswith("ថ្ងៃទីដប់បួនខែមេសាឆ្នាំពីរពាន់ម្ភៃប្រាំមួយ")
+    # Without a day word in front, one is added; Khmer digits read the same.
+    assert (
+        verbalize("កើតនៅ 03/11/1998")
+        .replace(" ", "")
+        .startswith("កើតនៅថ្ងៃទីបីខែវិច្ឆិកាឆ្នាំ")
+    )
+    assert verbalize("ថ្ងៃទី ០៩/០៣/២០២៥") == verbalize("ថ្ងៃទី 09/03/2025")
+    # Not a calendar date: left to the number reader.
+    assert "ខែ" not in verbalize("45/13/2026")
 
 
 def test_transliterate_with_training_words():
@@ -124,3 +137,19 @@ def test_expand_acronyms_uses_letter_names():
     assert expand_acronyms("KHQR") == "ខេ អេច ឃ្យូ អរ"
     assert expand_acronyms("HR") == "អេឆឹ អរ"
     assert expand_acronyms("I like Facebook") == "I like Facebook"
+
+
+def test_khmer_script_leaves_no_latin_in_bench_mixed():
+    import re
+
+    from samleng.bench import load_bench
+    from samleng.paths import ROOT
+    from samleng.text import khmer_script
+
+    items = load_bench(ROOT / "bench" / "khmertts_bench_v1.jsonl")
+    for it in items:
+        if it.category == "mixed":
+            assert not re.search("[A-Za-z]", khmer_script(it.text)), it.id
+        elif it.category != "english":
+            # Without English words it is the plain spoken form.
+            assert khmer_script(it.text) == verbalize(it.text), it.id
