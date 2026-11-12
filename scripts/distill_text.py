@@ -3,6 +3,7 @@
 uv run python scripts/distill_text.py                # v1: 500 mixed + 1,000 OpenSLR sentences
 uv run python scripts/distill_text.py --version v2   # v2: new mixed + numbers + unused OpenSLR
 uv run python scripts/distill_text.py --version v3   # v3: Khmer Wikipedia sentences
+uv run python scripts/distill_text.py --version v5   # v5: conversation, maths, word drills
 Writes outputs/distill/<version>/tts_in.jsonl ({"id", "source", "text"}), ready for the VoxCPM2 runner.
 """
 
@@ -33,6 +34,15 @@ TEXTS = {
     "v4": [
         ("tutor_v4", "distill_tutor_v4.txt", "tut4"),
         ("mixed_tutor_v4", "distill_mixed_tutor_v4.txt", "mtut4"),
+    ],
+    # Conversation: short replies, questions, everyday talk; templated maths and word drills
+    # (scripts/tutor_text.py).
+    "v5": [
+        ("short_v5", "distill_short_v5.txt", "short5"),
+        ("questions_v5", "distill_questions_v5.txt", "q5"),
+        ("talk_v5", "distill_talk_v5.txt", "talk5"),
+        ("numbers_v5", "distill_maths_v5.txt", "num5"),
+        ("mixed_v5", "distill_mixed_v5.txt", "mix5"),
     ],
 }
 
