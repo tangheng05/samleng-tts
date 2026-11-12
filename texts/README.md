@@ -25,7 +25,7 @@ The v1 and v2 batches also read sentence text from [OpenSLR 42](https://openslr.
 
 | File | What it is |
 |---|---|
-| `en_km_train.json` | 749 English words → Khmer-script spellings, each reviewed by a native speaker. Rule: spell the English *sound* (never a translation), so text and teacher audio agree. The 112 spellings of the benchmark's own words live in `samleng.text.EN_KM`. |
+| `en_km_train.json` | 818 English words → Khmer-script spellings, each reviewed by a native speaker. Rule: spell the English *sound* (never a translation), so text and teacher audio agree. The 112 spellings of the benchmark's own words live in `samleng.text.EN_KM`. |
 | `teacher_hints.json` | Respellings for words the teacher mispronounces (e.g. a vowel-series error). Only the teacher's input is respelled; training text keeps the real spelling. |
 | `teacher_ear_rejects.txt` | Teacher clips a native listener rejected by ear (`<clip id> <note>`); they are left out of training and not retried automatically. |
 | `phrase_breaks.json` | Weights of the phrase-space model in `samleng.phrases`, learned from writers' spaces in Khmer Wikipedia by `scripts/phrase_breaks.py`. Optional tool; not applied to training text. |
