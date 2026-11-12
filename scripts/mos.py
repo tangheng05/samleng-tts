@@ -7,29 +7,17 @@ uv run python scripts/mos.py report --study mixed_v0 \
 """
 
 import argparse
-import json
-import threading
+import contextlib
 import webbrowser
-from http import HTTPStatus
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
 
-from samleng.audio import leveled_wav
 from samleng.bench import load_bench
-from samleng.mos import (
-    PAGE,
-    append_rating,
-    build_clips,
-    compare,
-    load_ratings,
-    merge_systems,
-    order_for,
-    summarize,
-)
+from samleng.mos import build_clips, compare, load_ratings, merge_systems, summarize
 from samleng.paths import OUTPUT_DIR, ROOT
+from samleng.rating_server import mos_handler
 
 DEFAULT_SYSTEMS = {
     "mms": "baseline/pilot_v1/mms",
@@ -41,68 +29,6 @@ PROTOCOL = """\
 - p is a paired Wilcoxon signed-rank test over the sentences both systems share.
 - Clips are loudness-normalized to -26 dB active speech level; native sample rates kept.
 - MOS values are only comparable within this study."""
-
-
-def make_handler(clips, ratings_path):
-    by_id = {c.clip: c for c in clips}
-    lock = threading.Lock()
-
-    class Handler(BaseHTTPRequestHandler):
-        def send(self, status, body=b"", ctype="application/json"):
-            self.send_response(status)
-            self.send_header("Content-Type", ctype)
-            self.send_header("Content-Length", str(len(body)))
-            self.send_header("Cache-Control", "no-store")
-            self.end_headers()
-            self.wfile.write(body)
-
-        def send_json(self, obj, status=HTTPStatus.OK):
-            self.send(status, json.dumps(obj, ensure_ascii=False).encode())
-
-        def do_GET(self):
-            url = urlparse(self.path)
-            if url.path == "/":
-                self.send(HTTPStatus.OK, PAGE.read_bytes(), "text/html; charset=utf-8")
-            elif url.path == "/api/clips":
-                rater = parse_qs(url.query).get("rater", [""])[0].strip()
-                if not rater:
-                    return self.send_json({"error": "rater is required"}, 400)
-                rated = {
-                    r["clip"]: r["score"]
-                    for r in load_ratings(ratings_path)
-                    if r["rater"] == rater
-                }
-                order = [
-                    {"clip": c.clip, "text": c.text} for c in order_for(rater, clips)
-                ]
-                self.send_json({"clips": order, "rated": rated})
-            elif url.path.startswith("/audio/") and url.path[7:] in by_id:
-                self.send(
-                    HTTPStatus.OK, leveled_wav(by_id[url.path[7:]].audio), "audio/wav"
-                )
-            else:
-                self.send(HTTPStatus.NOT_FOUND)
-
-        def do_POST(self):
-            if self.path != "/api/rate":
-                return self.send(HTTPStatus.NOT_FOUND)
-            try:
-                body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-                rater, clip = body["rater"].strip(), by_id[body["clip"]]
-                if not rater:
-                    raise ValueError("rater is required")
-                with lock:
-                    append_rating(ratings_path, rater, clip, int(body["score"]))
-            except KeyError as e:
-                return self.send_json({"error": f"unknown or missing {e}"}, 400)
-            except (ValueError, TypeError) as e:
-                return self.send_json({"error": str(e)}, HTTPStatus.BAD_REQUEST)
-            self.send_json({"ok": True})
-
-        def log_message(self, *args):
-            pass
-
-    return Handler
 
 
 def parse_merge(pairs):
@@ -160,6 +86,7 @@ def main() -> None:
     serve.add_argument(
         "--ids", help="file with one sentence id per line (replaces --category)"
     )
+    serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8765)
     serve.add_argument("--no-open", action="store_true")
     report = sub.add_parser("report", help="summarize ratings")
@@ -192,17 +119,15 @@ def main() -> None:
         items = [it for it in items if it.category == args.category]
     clips = build_clips(items, parse_systems(args.system))
     server = ThreadingHTTPServer(
-        ("127.0.0.1", args.port), make_handler(clips, ratings_path)
+        (args.host, args.port), mos_handler(clips, ratings_path)
     )
-    url = f"http://127.0.0.1:{args.port}/"
+    url = f"http://{args.host}:{args.port}/"
     print(f"{len(clips)} clips, saving to {ratings_path}")
     print(f"Rating page: {url}  (Ctrl+C to stop)")
     if not args.no_open:
         webbrowser.open(url)
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         server.serve_forever()
-    except KeyboardInterrupt:
-        pass
 
 
 if __name__ == "__main__":
