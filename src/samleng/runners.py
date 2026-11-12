@@ -23,3 +23,20 @@ def write_jsonl(path: Path, rows: list[dict]) -> None:
 def read_jsonl(path: Path) -> list[dict]:
     with open(path, encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]
+
+
+def same_settings(folder: Path, settings: dict) -> None:
+    """Record how a cached output folder is produced; refuse to reuse it for other settings.
+
+    Folders from before this check (no settings.json) are accepted as they are.
+    """
+    f = folder / "settings.json"
+    if f.exists():
+        old = json.loads(f.read_text(encoding="utf-8"))
+        if old != settings:
+            raise SystemExit(
+                f"{folder} was made with {old}, not {settings}: delete it or use another --tag"
+            )
+    elif not any(folder.glob("results.*")):
+        folder.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(settings, ensure_ascii=False), encoding="utf-8")

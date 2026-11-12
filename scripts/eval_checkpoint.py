@@ -3,7 +3,8 @@
 uv run python scripts/eval_checkpoint.py outputs/train/distill_v1_A/<run folder>
 uv run python scripts/eval_checkpoint.py <run folder> --step 2000
 uv run python scripts/eval_checkpoint.py <run B folder> --translit            # English in Khmer script
-uv run python scripts/eval_checkpoint.py <run folder> --tag seed1 --synth="--seed 1"
+uv run python scripts/eval_checkpoint.py <run folder> --tag seed1 --synth="--noise-scale-dp 0 --seed 1"
+uv run python scripts/eval_checkpoint.py <run folder> --voice teacher_clear/0 --pace 0.867   # new voice
 
 Text is verbalized like the training data. Mixed sentences are split into
 mixed_unseen / mixed_seen / mixed_partial (bench/khmertts_bench_v1_mixed_split.json).
@@ -27,12 +28,14 @@ from samleng.eval.cer import mixed_cer
 from samleng.eval.guard import guard_flags, signal_stats
 from samleng.eval.report import compare_to_base
 from samleng.paths import OUTPUT_DIR, ROOT
-from samleng.runners import read_jsonl, run, write_jsonl
+from samleng.runners import read_jsonl, run, same_settings, write_jsonl
 from samleng.text import khmer_script, verbalize
 
 BENCH = ROOT / "bench" / "khmertts_bench_v1.jsonl"
 SPLIT = ROOT / "bench" / "khmertts_bench_v1_mixed_split.json"
 EVAL = OUTPUT_DIR / "train" / "eval"
+# Owner-rated and scored better than the model's shipped 0.6 (2026-11-12); base keeps 0.6.
+STEADY = "--noise-scale-dp 0"
 
 
 def checkpoints(run_dir: Path) -> dict[int, Path]:
@@ -47,6 +50,8 @@ def score(
     out: Path, items, ckpt: Path | None, config: Path | None, spoken=verbalize, synth=()
 ) -> pd.DataFrame:
     """Synthesize + transcribe once per folder; later calls read the cached results.csv."""
+    if ckpt:
+        same_settings(out, {"synth": [str(x) for x in synth], "input": spoken.__name__})
     if (out / "results.csv").exists():
         return pd.read_csv(out / "results.csv")
     manifest = out / "tts_in.jsonl"
@@ -94,16 +99,24 @@ def guard(out: Path, enc) -> pd.DataFrame | None:
     return df
 
 
-def guard_table(guards: dict[str, pd.DataFrame]) -> pd.DataFrame:
+def speech(g: pd.DataFrame) -> pd.Series:
+    """Seconds of speech: clip length without the silence at both ends."""
+    return g["seconds"] - g["lead_silence_s"] - g["trail_silence_s"]
+
+
+def guard_table(
+    guards: dict[str, pd.DataFrame], voice: str = "base", pace: float = 1.0
+) -> pd.DataFrame:
+    """Voice similarity to the clips of `voice`, speech duration vs base, silence, clipping."""
     base = guards["base"].set_index("id")
     cols = [c for c in base.columns if c.startswith("e") and c[1:].isdigit()]
-    profile = base[cols].to_numpy().mean(axis=0)
+    profile = guards[voice][cols].to_numpy().mean(axis=0)
     profile /= np.linalg.norm(profile)
     rows = []
     for system, g in guards.items():
         g = g.set_index("id")
         spk = g[cols].to_numpy() @ profile
-        ratio = g["seconds"] / base.loc[g.index, "seconds"]
+        ratio = speech(g) / speech(base).loc[g.index]
         rows.append(
             {
                 "system": system,
@@ -115,9 +128,12 @@ def guard_table(guards: dict[str, pd.DataFrame]) -> pd.DataFrame:
             }
         )
     out = pd.DataFrame(rows)
-    base_row = out[out["system"] == "base"].iloc[0].to_dict()
+    target = out[out["system"] == voice].iloc[0].to_dict()
     out["flags"] = [
-        ", ".join(guard_flags(r, base_row)) or "ok" for r in out.to_dict("records")
+        "reference"
+        if r["system"] in ("base", voice)
+        else ", ".join(guard_flags(r, target, pace)) or "ok"
+        for r in out.to_dict("records")
     ]
     return out
 
@@ -136,7 +152,20 @@ def main() -> None:
     )
     ap.add_argument("--tag", help="score into <run>_<tag> (use with --synth)")
     ap.add_argument(
-        "--synth", default="", help="extra synthesize.py options for the checkpoint"
+        "--synth",
+        default=STEADY,
+        help="synthesize.py options for the checkpoint (replaces the default)",
+    )
+    ap.add_argument(
+        "--voice",
+        default="base",
+        help="scored folder under outputs/train/eval with the target voice's clips",
+    )
+    ap.add_argument(
+        "--pace",
+        type=float,
+        default=1.0,
+        help="wanted speech duration relative to base (the owner-approved pace is 0.867)",
     )
     args = ap.parse_args()
 
@@ -180,16 +209,21 @@ def main() -> None:
 
     enc = SpeakerEncoder()
     guards = {"base": guard(base, enc)}
+    if args.voice != "base":
+        guards[args.voice] = guard(EVAL / args.voice, enc)
     for d in sorted(
         (EVAL / name).iterdir(), key=lambda d: int(d.name) if d.name.isdigit() else -1
     ):
         if d.name.isdigit() and (g := guard(d, enc)) is not None:
             guards[f"step{d.name}"] = g
-    gt = guard_table(guards) if guards["base"] is not None else None
+    ready = all(g is not None for g in guards.values())
+    gt = guard_table(guards, args.voice, args.pace) if ready else None
     if gt is not None:
         text += (
-            "\n## Guardrails (vs base; flags: voice similarity drop > 0.03, speed outside "
-            "0.9–1.1×, clipping)\n\n" + gt.to_markdown(index=False) + "\n"
+            f"\n## Guardrails (voice similarity to {args.voice}: flag if more than 0.03 below "
+            f"its own clips; speech duration vs base: flag outside {args.pace:g}× ±10%; clipping)\n\n"
+            + gt.to_markdown(index=False)
+            + "\n"
         )
     (EVAL / name / "summary.md").write_text(text, encoding="utf-8")
     print(text)

@@ -28,12 +28,17 @@ def signal_stats(y: np.ndarray, sr: int) -> dict:
     }
 
 
-def guard_flags(step: dict, base: dict) -> list[str]:
-    """Which guardrails a checkpoint's summary breaks, compared with the base model."""
+def guard_flags(step: dict, voice: dict, pace: float = 1.0) -> list[str]:
+    """Which guardrails a checkpoint's summary breaks.
+
+    `voice` is the summary of the target voice's own clips; `pace` is the wanted duration
+    relative to base (1.0 = base's pace).
+    """
     flags = []
-    if step["spk_median"] < base["spk_median"] - MAX_SPK_DROP:
+    if step["spk_median"] < voice["spk_median"] - MAX_SPK_DROP:
         flags.append("voice drift")
-    if not DUR_RATIO_RANGE[0] <= step["dur_ratio_median"] <= DUR_RATIO_RANGE[1]:
+    low, high = (pace * r for r in DUR_RATIO_RANGE)
+    if not low <= step["dur_ratio_median"] <= high:
         flags.append("speed drift")
     if step["clip_frac_p95"] > MAX_CLIP_FRAC:
         flags.append("clipping")

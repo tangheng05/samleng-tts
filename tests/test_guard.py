@@ -27,3 +27,8 @@ def test_guard_flags_catch_voice_and_speed_drift():
     assert guard_flags(ok | {"spk_median": 0.93}, base) == ["voice drift"]
     assert guard_flags(ok | {"dur_ratio_median": 1.2}, base) == ["speed drift"]
     assert guard_flags(ok | {"clip_frac_p95": 0.01}, base) == ["clipping"]
+    # A target pace moves the allowed window: 0.88x is fine when 0.88 is wanted.
+    fast = ok | {"dur_ratio_median": 0.88}
+    assert guard_flags(fast, base) == ["speed drift"]
+    assert guard_flags(fast, base, pace=0.88) == []
+    assert guard_flags(ok, base, pace=0.88) == ["speed drift"]

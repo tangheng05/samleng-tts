@@ -1,11 +1,16 @@
 #!/bin/zsh
 # Score every 2000th checkpoint of the newest run under OUT_DIR while it trains, with phone updates.
 #   ops/watch_run.sh outputs/train/distill_v1_B     (started by the training job, in the background)
+#   ops/watch_run.sh OUT_DIR --voice teacher_clear/0 --pace 0.867 --both
+# Extra options go to eval_checkpoint.py; --both also scores with English fed in Khmer script.
 export PATH=$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin
 export LC_ALL=en_US.UTF-8
 cd ~/code/samleng-tts
-OUT=${1:?usage: watch_run.sh OUT_DIR}
+OUT=${1:?usage: watch_run.sh OUT_DIR [eval options] [--both]}
 name=${OUT:t}
+shift
+both=0; opts=()
+for a in "$@"; do [[ $a == --both ]] && both=1 || opts+=($a); done
 
 score_new() {
   local run=$(ls -td $OUT/*/ 2>/dev/null | head -1)
@@ -16,7 +21,8 @@ score_new() {
     (( s % 2000 == 0 )) || continue
     [[ -f outputs/train/eval/$name/$s/results.csv ]] && continue
     echo "== step $s $(date)"
-    nice -n 10 uv run python scripts/eval_checkpoint.py $run --step $s --notify
+    nice -n 10 uv run python scripts/eval_checkpoint.py $run --step $s --notify $opts
+    (( both )) && nice -n 10 uv run python scripts/eval_checkpoint.py $run --step $s --translit $opts
     # Training keeps only its last 3 checkpoints; keep every scored one for the final pick.
     mkdir -p outputs/train/keep/$name && cp -n $c outputs/train/keep/$name/
   done
