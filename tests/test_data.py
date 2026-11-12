@@ -116,3 +116,23 @@ def test_mixed_group_relabels_only_mixed():
     assert mixed_group("mixed-02", "mixed", split) == "mixed_seen"
     assert mixed_group("mixed-03", "mixed", split) == "mixed_partial"
     assert mixed_group("pure-01", "pure", split) == "pure"
+
+
+def test_both_scripts_adds_a_khmer_copy_only_when_fully_spelled():
+    from samleng.data import both_scripts
+
+    words = {"file": "ហ្វាយ"}
+    row = {"id": "m-1", "text": "សូមផ្ញើ file តាម USB ។", "audio": "a.wav"}
+    latin, khmer = both_scripts(row, words)
+    assert (
+        latin["id"] == "m-1" and "file" in latin["text"] and "USB" not in latin["text"]
+    )
+    assert khmer["id"] == "m-1-km" and khmer["audio"] == "a.wav"
+    assert "ហ្វាយ" in khmer["text"] and "file" not in khmer["text"]
+    # An unknown word stays Latin, so there is no Khmer-script copy.
+    assert (
+        len(both_scripts({"id": "m-2", "text": "សូមផ្ញើ file និង folder ។"}, words)) == 1
+    )
+    # No English at all: one row, unchanged.
+    plain = {"id": "p-1", "text": "ពូកែណាស់ ។"}
+    assert both_scripts(plain, words) == [plain]

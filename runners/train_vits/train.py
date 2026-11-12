@@ -89,6 +89,9 @@ def main() -> None:
         eval_split_size=config.eval_split_size,
         formatter=manifest_formatter(args.limit),
     )
+    # A clip can have two rows (English in both scripts): keep held-out audio out of training.
+    held = {s["audio_file"] for s in evals}
+    train = [s for s in train if s["audio_file"] not in held]
     print(f"{len(train)} train clips, {len(evals)} eval clips", flush=True)
     model = Vits.init_from_config(config)
     if args.continue_run:

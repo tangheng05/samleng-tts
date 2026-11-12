@@ -140,3 +140,19 @@ def distill_reject(
     if not rate[0] <= row["cps"] <= rate[1]:
         return "speed"
     return None
+
+
+def both_scripts(row: dict, words: dict[str, str]) -> list[dict]:
+    """A training row, plus a copy with its English in Khmer script when every word has a spelling.
+
+    The same audio then teaches both inputs: dictionary words arrive in Khmer script at run
+    time, unknown words in Latin letters. Abbreviations are spelled out in both.
+    """
+    from samleng.text import expand_acronyms, transliterate
+
+    latin = expand_acronyms(row["text"])
+    out = [row | {"text": latin}]
+    khmer = transliterate(latin, words)
+    if khmer != latin and not _EN_WORD.search(khmer):
+        out.append(row | {"id": row["id"] + "-km", "text": khmer})
+    return out
