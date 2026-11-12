@@ -1,3 +1,5 @@
+"""Loudness leveling, so clips are compared and trained at one speech level."""
+
 import functools
 import io
 

@@ -1,3 +1,9 @@
+"""Human listening tests: blind 1-5 ratings (MOS) and paired comparisons (CCR).
+
+Clips get opaque ids and a per-rater order. Statistics average per sentence first, since
+ratings of the same sentence are not independent.
+"""
+
 import hashlib
 import itertools
 import json

@@ -4,8 +4,8 @@
   uv run python train.py MANIFEST OUT_DIR --continue-run OUT_DIR/<run folder>   # resume
   uv run python train.py MANIFEST OUT_DIR --limit 16 --epochs 1                 # smoke test
 
-The data scripts decide what to keep. The Coqui trainer has no MPS support, so on a Mac
-this trains on CPU: slow but free.
+The data scripts decide what to keep. `--device mps` trains on the Apple GPU through
+Accelerate (about 2.7x faster than CPU); every run can resume with `--continue-run`.
 """
 
 import argparse

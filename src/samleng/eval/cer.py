@@ -1,3 +1,5 @@
+"""Character error rate between a sentence and what a speech recognizer heard."""
+
 import string
 import unicodedata
 

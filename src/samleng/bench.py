@@ -1,3 +1,5 @@
+"""Benchmark files: one JSON line per sentence with id, category and text."""
+
 import json
 from dataclasses import dataclass
 from pathlib import Path

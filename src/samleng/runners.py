@@ -1,3 +1,5 @@
+"""Call model runners (isolated environments under runners/) through JSONL files."""
+
 import json
 import subprocess
 from pathlib import Path

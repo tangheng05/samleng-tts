@@ -1,3 +1,10 @@
+"""Text front end: Khmer text as written -> the words a voice should say.
+
+Numbers, dates, times and money are spelled out (`verbalize`), abbreviations are spelled
+letter by letter (`expand_acronyms`) and known English words can be written in Khmer script
+(`transliterate`, `khmer_script`). Readings marked owner-confirmed were checked by ear.
+"""
+
 import functools
 import json
 import re

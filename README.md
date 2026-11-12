@@ -1,18 +1,22 @@
 # Samleng-TTS
 
-Real-time, native-sounding Khmer text-to-speech that runs on everyday hardware, plus an open benchmark for Khmer TTS with human ratings. *Samleng* means "voice" in Khmer.
+Real-time, native-sounding Khmer text-to-speech that runs on everyday hardware, plus an open benchmark for Khmer TTS with human ratings. *Samleng* (សំឡេង) means "voice" in Khmer.
 
-> Status: **KhmerTTS-Bench v1 results in** (7 open models + Gemini 2.5 and 3.8). Now training a small real-time voice distilled from VoxCPM2.
+> **Status (November 2026):** benchmark published; a small voice distilled from a 2B teacher is training. First results below are preliminary.
 
 Write-ups: [How good is open Khmer TTS in 2026?](docs/posts/01-how-good-is-open-khmer-tts.md) · [Every open Khmer voice, measured](docs/posts/02-every-open-khmer-tts-model.md)
 
+## What is here
+
+1. **KhmerTTS-Bench v1**: 320 native-reviewed sentences (pure Khmer, long, names, numbers, Khmer–English mixed, English) with fixed scoring code. Also on Hugging Face: [hengthegoat/khmertts-bench-v1](https://huggingface.co/datasets/hengthegoat/khmertts-bench-v1).
+2. **A leaderboard** of every open Khmer TTS model we could run, plus Gemini TTS as a commercial reference.
+3. **A distillation pipeline**: a large teacher ([VoxCPM2](https://huggingface.co/openbmb/VoxCPM2), 2B) reads thousands of sentences in one fixed voice; a small VITS student (about 36M parameters at inference, 10× faster than real time on a CPU) learns from that audio. See [docs/pipeline.md](docs/pipeline.md).
+4. **A Khmer text front end**: numbers, dates, times, money, abbreviations and English words turned into what a Khmer speaker would say.
+5. **Listening-test tools**: blind 1–5 ratings and paired A/B comparisons with proper statistics.
+
 ## Why
 
-Open Khmer TTS has improved fast, but there's no shared way to measure it, and models still struggle with real-world text: numbers, dates, money, and Khmer–English code-switching. This project:
-
-1. Builds **KhmerTTS-Bench**, a public benchmark (CER, real-time factor, and native-speaker MOS).
-2. Distills a large multilingual TTS model into a **small model that runs in real time on CPU / Apple Silicon**.
-3. Ships it as a streaming API and demo.
+Open Khmer TTS has improved fast, but there was no shared way to measure it, and models still struggle with real-world text: numbers, dates, money and Khmer–English code-switching. Automatic scores also miss what native listeners hear, so this project pairs every automatic number with human ratings.
 
 ## KhmerTTS-Bench v1 results (320 sentences)
 
@@ -36,6 +40,23 @@ Open Khmer TTS has improved fast, but there's no shared way to measure it, and m
 - **Gemini 3.8 read all 320 sentences** and is the most accurate system here. It reads a style prefix such as "Say in a warm, friendly voice:" out loud, so it gets the bare text (same voice, Callirrhoe). Gemini 2.5 needs that prefix to read rather than answer.
 - With our text frontend (numbers spelled out), number errors mostly disappear; v1 results with the frontend will follow. Zio's own number normalizer is not used.
 
+## Distillation results so far (preliminary)
+
+A first student trained on only 1.2 hours of teacher audio. Scores are on the 300 Khmer sentences of the benchmark with the text front end (numbers spelled out); lower CER is better. MOS is a blind 1–5 rating of 25 sentences by **one** native speaker (the author), so read it as a signal, not a result.
+
+| | All-Khmer CER (median) | Mixed sentences with never-seen English words | MOS (1 rater) |
+|---|---|---|---|
+| sengtha (the base model) | 10.4% | 36.7% | 2.16 ± 0.37 |
+| Student A, 1.2 h of teacher audio | 5.7% (3 seeds) | 23.7% | 3.40 ± 0.29 |
+| Student B, same audio, English written in Khmer script | 6.1% | 13.2% | not rated |
+| Teacher (VoxCPM2, fixed voice) | 3.1% | 12.9% | 3.72 ± 0.25 |
+
+- Writing known English words in Khmer script before synthesis helps more than training on Latin letters: it alone takes the base model from 36.7% to 16.9% on those sentences.
+- Student A reads English in Latin letters, student B in Khmer script. The teacher's error rate is for the new voice used in the next run; its rating is for the same voice as the students.
+- The same checkpoint scored with three random seeds moves about 1 point, so smaller differences are not reported as real.
+- With Khmer-script input, "never-seen" means the Latin form never appeared in training text; a few common loanwords (Facebook, video …) do occur in Khmer script in the training sentences.
+- A larger run (about 8.7 hours of teacher audio in a new voice, English in both scripts) is training now. Multi-rater listening tests follow.
+
 ## Pilot results (Phase 0, 100 sentences)
 
 [`bench/pilot_v1.jsonl`](bench/pilot_v1.jsonl): 40 pure Khmer, 10 long, 25 numbers/dates/money, 25 Khmer–English mixed, all reviewed by a native speaker. All rows except "raw digits" use the text frontend.
@@ -55,37 +76,76 @@ Open Khmer TTS has improved fast, but there's no shared way to measure it, and m
 - An automatic naturalness predictor (UTMOSv2) did not agree with the human ratings on 30 rated mixed clips (Spearman 0.25) and couldn't separate the two systems, so it is not reported.
 - **Real-time factor** is generation time ÷ audio length (below 1 = faster than real time). MMS runs on CPU, VoxCPM2 on Apple Silicon (MPS) with 16 GB of memory. We report the median because a few VoxCPM2 clips are much slower when memory is tight.
 
-## Setup
+## Quick start
 
-Requires [uv](https://docs.astral.sh/uv/) and `ffmpeg`.
+Requires [uv](https://docs.astral.sh/uv/) and `ffmpeg` (`brew install ffmpeg`).
 
 ```bash
-brew install ffmpeg
-uv sync
-cp .env.example .env
-uv run pytest
+uv sync                      # main environment (Python 3.11)
+cp .env.example .env         # optional: data/output folders, API keys
+uv run pytest -q             # unit tests, no model downloads
+
+# Score open models on the benchmark (downloads models on first use)
+uv run python scripts/baseline.py bench/khmertts_bench_v1.jsonl --systems sengtha mms --verbalize
+
+# Blind listening test on the clips of two systems
+uv run python scripts/mos.py serve --study demo --bench bench/khmertts_bench_v1.jsonl --category pure \
+    --system sengtha=baseline/khmertts_bench_v1_verbalized/sengtha --system mms=baseline/khmertts_bench_v1_verbalized/mms
+uv run python scripts/mos.py report --study demo
 ```
 
-Set `SAMLENG_DATA` / `SAMLENG_OUTPUT` in `.env` to keep data and outputs somewhere else, such as an external drive.
+The text front end on its own:
 
-## Human ratings (MOS)
+```python
+from samleng.text import khmer_script, verbalize
 
-`uv run python scripts/mos.py serve` opens a local page for blind 1–5 listening scores; `uv run python scripts/mos.py report` gives MOS per system (CI over sentences) and paired Wilcoxon tests.
-
-## Layout
-
+verbalize(
+    "ថ្ងៃទី 14/04/2026 ម៉ោង 7:30 ព្រឹក"
+)  # ថ្ងៃទី ដប់បួន ខែមេសា ឆ្នាំ ពីរពាន់ម្ភៃប្រាំមួយ ម៉ោង ប្រាំពីរកន្លះ ព្រឹក
+khmer_script("សូមផ្ញើ file តាម USB")  # សូមផ្ញើ ហ្វាយ តាម យូ អេស ប៊ី
 ```
-src/samleng/       library code (eval harness, data pipeline, models)
-scripts/           runnable entry points
-bench/             benchmark sentences and metadata
-docs/              write-ups and results
-runners/           isolated envs for models with conflicting deps
-tests/
-```
+
+Models that need conflicting dependencies (the teacher, the ASR judge, the VITS trainer) live in isolated environments under [`runners/`](runners/README.md) and are called through JSONL files.
+
+## Repository layout
+
+| Path | What it holds |
+|---|---|
+| [`src/samleng/`](src/samleng) | The library: text front end (`text`, `en2km`, `phrases`), scoring (`eval/`), data checks (`data`), listening tests (`mos`, `rating_server`), baselines (`tts/`) |
+| [`scripts/`](scripts) | Command-line entry points: benchmark runs, teacher-data checks, training manifest, checkpoint scoring, rating pages ([index](docs/pipeline.md#scripts)) |
+| [`runners/`](runners/README.md) | One isolated environment per model: teacher, judge, student training, other TTS systems |
+| [`bench/`](bench/README.md) | Benchmark sentences and the held-out split for English words |
+| [`texts/`](texts/README.md) | Sentences the teacher reads, approved English spellings, pronunciation fixes |
+| [`ops/`](ops/README.md) | Restart-safe job queue for an always-on Mac, checkpoint watcher, lab notebook |
+| [`docs/`](docs) | Pipeline guide and blog posts |
+| [`tests/`](tests) | Unit tests (run in CI on macOS with ruff) |
+
+## How results stay trustworthy
+
+- **Held-out test set.** No benchmark sentence, and none of 64 held-out English words, may appear in training text; the builders refuse them.
+- **Pinned models and seeds.** The teacher, the judge and every evaluated model load at a fixed revision; synthesis is seeded; lock files pin all dependencies.
+- **Paired statistics.** Systems are compared per sentence (Wilcoxon signed-rank); several seeds before a difference is called real.
+- **Guardrails next to error rates.** Each scored checkpoint also reports voice similarity, speaking pace, silence and clipping, so a lower error rate cannot hide a drifting voice.
+- **Ears over metrics.** A native speaker checks samples of every batch of teacher audio; an automatic naturalness predictor (UTMOSv2) was tested and dropped because it did not track Khmer ratings.
+- **A lab notebook.** [`ops/notebook.jsonl`](ops/notebook.jsonl) has one line per finished experiment: question, setup, result, verdict.
+
+## Limitations
+
+- Human ratings so far come from a single rater. A study with 10+ native listeners is planned.
+- The student's voice is synthetic (designed with the teacher), and the student cannot be better than its teacher.
+- The ASR judge cannot hear some errors (vowel-series mistakes, a swallowed syllable); those are caught by listening only.
+- English words outside the approved spelling list are read from Latin letters and are less reliable.
+
+## Roadmap
+
+1. Finish the 8.7-hour run and release the model (`CC-BY-SA-4.0`, inherited from sengtha) with a streaming server and a demo.
+2. Multi-rater A/B study against Gemini TTS; a challenge set for errors that CER cannot hear.
+3. A better teacher (fine-tuned on real Khmer speech) and, if ratings call for it, a stronger 24 kHz student.
+4. A technical report.
 
 ## Ethics
 
-No voices are used without consent. Generated audio should be labeled as AI-generated.
+No voices are used without consent; the current voice is synthetic. Generated audio should be labeled as AI-generated.
 
 ## Acknowledgements
 
@@ -102,10 +162,22 @@ No voices are used without consent. Generated audio should be labeled as AI-gene
 | [WavLM-base-plus-sv](https://huggingface.co/microsoft/wavlm-base-plus-sv) | Speaker similarity | not stated on the model card |
 | [CMUdict](https://github.com/cmusphinx/cmudict) | English → Khmer-script converter | BSD-2-Clause |
 | [khmer-nltk](https://github.com/VietHoang1512/khmer-nltk) | Word segmentation for Zio | Apache-2.0 |
+| [khmercut](https://github.com/seanghay/khmercut) | Word segmentation for phrase spacing | Apache-2.0 |
 | [Coqui TTS](https://github.com/idiap/coqui-ai-TTS) | VITS fine-tuning | MPL-2.0 |
 | [MMS-TTS Khmer](https://huggingface.co/facebook/mms-tts-khm) | Small baseline | CC-BY-NC-4.0 |
 | [UTMOSv2](https://github.com/sarulab-speech/UTMOSv2) | Naturalness predictor (evaluated, not used) | MIT |
 
 ## License
 
-Code: MIT. Models and datasets carry their own licenses.
+Code: MIT. Benchmark: CC-BY-4.0. Models and third-party datasets carry their own licenses (see the tables above); a model fine-tuned from sengtha is CC-BY-SA-4.0.
+
+## Citation
+
+```bibtex
+@misc{samleng2026,
+  title  = {Samleng-TTS: an open benchmark and a distilled real-time voice for Khmer},
+  author = {Tang, Heng},
+  year   = {2026},
+  url    = {https://github.com/tangheng05/samleng-tts}
+}
+```

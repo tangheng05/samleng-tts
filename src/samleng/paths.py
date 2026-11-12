@@ -1,3 +1,5 @@
+"""Where data and outputs live; override with SAMLENG_DATA / SAMLENG_OUTPUT."""
+
 import os
 from pathlib import Path
 
