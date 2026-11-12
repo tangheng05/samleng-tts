@@ -1,0 +1,3 @@
+# Teacher clips the owner rejected by ear: "<clip id> <note>". They are left out of training.
+mtut4-085 "a red car" rushed, "a" read as "ah" (2026-11-12)
+mtut4-083 "an" read as "an a" (2026-11-12)

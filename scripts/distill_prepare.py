@@ -35,6 +35,15 @@ SENGTHA = {
 }
 # The runner was started from its own folder, so its audio paths are relative to it.
 RUNNER_DIR = ROOT / "runners" / "tts_voxcpm"
+# Clips the owner rejected by ear: "<id> <note>" per line. No automatic check hears these.
+EAR = ROOT / "texts" / "teacher_ear_rejects.txt"
+
+
+def ear_rejects() -> set[str]:
+    if not EAR.exists():
+        return set()
+    lines = EAR.read_text(encoding="utf-8").splitlines()
+    return {x.split()[0] for x in lines if x.strip() and not x.startswith("#")}
 
 
 def voice() -> dict:
@@ -112,9 +121,12 @@ def stats() -> None:
     for r in rows:
         score(r)
     rate = rate_window(rows)
+    ear = ear_rejects()
     for r in rows:
         r.pop("reject", None)
-        if reason := distill_reject(r, rate):
+        if r["id"] in ear:
+            r["reject"] = "ear"
+        elif reason := distill_reject(r, rate):
             r["reject"] = reason
     write_jsonl(MANIFEST, rows)
     df = pd.DataFrame(rows)
@@ -141,7 +153,8 @@ def retry(seed: int) -> None:
     Hard sentences fail most often, so dropping them would bias the data toward easy ones.
     """
     rows = read_jsonl(MANIFEST)
-    bad = [r for r in rows if "reject" in r]
+    # Another take of an ear reject would pass the same checks unheard.
+    bad = [r for r in rows if r.get("reject", "ear") != "ear"]
     if not bad:
         print("nothing to retry")
         return
