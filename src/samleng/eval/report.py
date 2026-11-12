@@ -116,3 +116,51 @@ def spearman_ci(x, y, n_boot: int = 2000, seed: int = 0) -> tuple[float, float, 
             boots.append(spearmanr(x[i], y[i]).statistic)
     lo, hi = np.percentile(boots, [2.5, 97.5])
     return round(rho, 3), round(float(lo), 3), round(float(hi), 3)
+
+
+def seed_average(frames: list[pd.DataFrame], metric=khmer_cer) -> pd.DataFrame:
+    """Per-sentence error averaged over runs of one system with different seeds.
+
+    Each frame has id, category, ref, hyp. Returns id, category, cer (the mean over frames).
+    One seed moves the all-Khmer median by about a point, so compare systems on this.
+    """
+    cers = [
+        pd.Series(
+            [metric(r, h) for r, h in zip(f["ref"], f["hyp"].fillna(""), strict=True)],
+            index=f["id"],
+        )
+        for f in frames
+    ]
+    first = frames[0].set_index("id")
+    mean = pd.concat(cers, axis=1).loc[first.index].mean(axis=1)
+    return pd.DataFrame(
+        {
+            "id": first.index,
+            "category": first["category"].to_numpy(),
+            "cer": mean.to_numpy(),
+        }
+    )
+
+
+def category_medians(avg: pd.DataFrame) -> dict[str, float]:
+    """Median error (%) per category and for ALL, from a seed_average frame."""
+    out = {c: g["cer"].median() for c, g in avg.groupby("category")}
+    return {
+        k: round(100 * float(v), 1)
+        for k, v in (out | {"ALL": avg["cer"].median()}).items()
+    }
+
+
+def paired(a: pd.DataFrame, b: pd.DataFrame, category: str | None = None) -> dict:
+    """Is system a better than b on the same sentences? (seed_average frames, Wilcoxon)."""
+    if category:
+        a, b = a[a["category"] == category], b[b["category"] == category]
+    x, y = a.set_index("id")["cer"], b.set_index("id")["cer"]
+    diff = (x - y[x.index]).round(6)
+    nonzero = diff[diff != 0]
+    return {
+        "n": len(diff),
+        "better": int((diff < 0).sum()),
+        "worse": int((diff > 0).sum()),
+        "p": float(wilcoxon(nonzero).pvalue) if len(nonzero) > 1 else 1.0,
+    }

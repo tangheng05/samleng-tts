@@ -23,13 +23,13 @@ import pandas as pd
 import soundfile as sf
 
 from samleng.bench import load_bench
-from samleng.data import mixed_group
+from samleng.data import khmer_script_leaks, mixed_group, strict_unseen
 from samleng.eval.cer import mixed_cer
 from samleng.eval.guard import guard_table, signal_stats
 from samleng.eval.report import compare_to_base
 from samleng.paths import OUTPUT_DIR, ROOT
 from samleng.runners import read_jsonl, run, same_settings, write_jsonl
-from samleng.text import khmer_script, verbalize
+from samleng.text import EN_KM, khmer_script, verbalize
 
 BENCH = ROOT / "bench" / "khmertts_bench_v1.jsonl"
 SPLIT = ROOT / "bench" / "khmertts_bench_v1_mixed_split.json"
@@ -99,6 +99,33 @@ def guard(out: Path, enc) -> pd.DataFrame | None:
     return df
 
 
+def strict_ids(manifest: Path, items) -> set[str]:
+    """Never-seen mixed sentences whose English words are also absent in Khmer script."""
+    if not manifest.exists():
+        return set()
+    split = json.loads(SPLIT.read_text())
+    spellings = {w: EN_KM.get(w, "") for w in split["banned"]}
+    leaked = khmer_script_leaks(spellings, (r["text"] for r in read_jsonl(manifest)))
+    return strict_unseen(items, split, leaked)
+
+
+def pace_hint(gt: pd.DataFrame, step: int, synth: list[str], pace: float) -> str:
+    """Which --length-scale would bring this step to the wanted pace."""
+    row = gt[gt["system"] == f"step{step}"]
+    if row.empty:
+        return ""
+    ratio = float(row["dur_ratio_median"].iloc[0])
+    used = (
+        float(synth[synth.index("--length-scale") + 1])
+        if "--length-scale" in synth
+        else 1.15
+    )
+    return (
+        f"\nPace: step {step} speaks at {ratio:g}× base with --length-scale {used:g}; "
+        f"for {pace:g}× use --length-scale {used * pace / ratio:.2f}.\n"
+    )
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("run_dir", type=Path)
@@ -121,6 +148,12 @@ def main() -> None:
         "--voice",
         default="base",
         help="scored folder under outputs/train/eval with the target voice's clips",
+    )
+    ap.add_argument(
+        "--train-manifest",
+        type=Path,
+        help="the run's training manifest (default: manifest.jsonl next to the run folder); "
+        "adds a mixed_unseen_strict row",
     )
     ap.add_argument(
         "--pace",
@@ -151,6 +184,14 @@ def main() -> None:
 
     # Same as plain CER without English words; on mixed it accepts either script.
     table = compare_to_base(pd.concat(frames, ignore_index=True), "base", mixed_cer)
+    strict = strict_ids(
+        args.train_manifest or args.run_dir.parent / "manifest.jsonl", items
+    )
+    if strict:
+        both = pd.concat(frames, ignore_index=True)
+        sub = compare_to_base(both[both["id"].isin(strict)], "base", mixed_cer)
+        sub = sub[sub["category"] == "ALL"].assign(category="mixed_unseen_strict")
+        table = pd.concat([table, sub], ignore_index=True)
     table["order"] = table["system"].str.removeprefix("step").astype(int)
     table = table.sort_values(["category", "order"]).drop(columns="order")
     rows = table.to_dict("records")
@@ -165,6 +206,11 @@ def main() -> None:
         + table.to_markdown(index=False)
         + "\n"
     )
+    if strict:
+        text += (
+            f"\nmixed_unseen_strict: the {len(strict)} never-seen sentences whose English words "
+            "also do not occur in the training text in Khmer script.\n"
+        )
     # Lazy import: WavLM is only needed once per new step (results are cached).
     from samleng.eval.spk import SpeakerEncoder
 
@@ -186,6 +232,7 @@ def main() -> None:
             + gt.to_markdown(index=False)
             + "\n"
         )
+        text += pace_hint(gt, step, args.synth.split(), args.pace)
     (EVAL / name / "summary.md").write_text(text, encoding="utf-8")
     print(text)
     if args.notify:

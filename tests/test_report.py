@@ -68,3 +68,29 @@ def test_spearman_ci_brackets_the_estimate():
     rho, lo, hi = spearman_ci(x, noisy)
     assert lo <= rho <= hi and 0 < rho < 1
     assert all(math.isnan(v) for v in spearman_ci([1, 1, 1], [1, 2, 3]))
+
+
+def test_seed_average_and_paired_comparison():
+    from samleng.eval.report import category_medians, paired, seed_average
+
+    def frame(hyps):
+        return pd.DataFrame(
+            {
+                "id": ["a", "b", "c"],
+                "category": ["pure", "pure", "names"],
+                "ref": ["កខគឃ", "កខគឃ", "កខគឃ"],
+                "hyp": hyps,
+            }
+        )
+
+    exact = lambda r, h: sum(x != y for x, y in zip(r, h, strict=True)) / len(r)  # noqa: E731
+    good = seed_average(
+        [frame(["កខគឃ", "កខគឃ", "កខគង"]), frame(["កខគឃ", "កខងង", "កខគឃ"])], exact
+    )
+    assert good["cer"].tolist() == [0.0, 0.25, 0.125]
+    assert category_medians(good) == {"names": 12.5, "pure": 12.5, "ALL": 12.5}
+    bad = seed_average([frame(["ងងងង", "កខងង", "កខគង"])], exact)
+    result = paired(good, bad)
+    assert (result["n"], result["better"], result["worse"]) == (3, 3, 0)
+    assert paired(good, bad, "names")["n"] == 1
+    assert paired(good, good)["p"] == 1.0

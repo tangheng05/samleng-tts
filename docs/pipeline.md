@@ -70,6 +70,14 @@ uv run python scripts/eval_checkpoint.py <run folder> --voice teacher_clear/0 --
 
 Each call voices the 300 Khmer benchmark sentences, transcribes them, and writes `outputs/train/eval/<run>/summary.md`: paired error rates against the base model per category (Wilcoxon), then guardrails (voice similarity, speech-only duration, silence, clipping). Results are cached per step; a folder remembers its synthesis settings and refuses to be reused with others. `ops/watch_run.sh` does this automatically while training.
 
+When a training manifest sits next to the run folder, the summary also has a `mixed_unseen_strict` row (never-seen English words that are also absent in Khmer script from the training text) and ends with the `--length-scale` that would hit the target pace.
+
+To choose between candidate checkpoints, compare them over several seeds:
+
+```bash
+uv run python scripts/pick_checkpoint.py <run folder> --steps 18000 20000 --synth="--noise-scale-dp 0 --length-scale 1.3"
+```
+
 Rules of thumb from our runs: one seed moves the all-Khmer median by about a point, so use three seeds before comparing; never stop on a single checkpoint; set speaking pace at playback (`--length-scale`), not by re-recording.
 
 ## 7. Listen and rate
@@ -89,6 +97,7 @@ Ratings are blind: clips get opaque ids and a per-rater order. Scores are averag
 |---|---|
 | `baseline.py` | Run TTS systems on a benchmark file and score them (leaderboard) |
 | `eval_checkpoint.py` | Score a fine-tuning checkpoint against the base model, with guardrails |
+| `pick_checkpoint.py` | Compare candidate checkpoints over several seeds with paired tests |
 | `distill_text.py` | Build the teacher's input from `texts/` with leak checks |
 | `wiki_text.py`, `tutor_text.py` | Collect Khmer Wikipedia sentences; generate maths and word-drill sentences |
 | `distill_prepare.py` | Prepare, check and retry teacher clips |

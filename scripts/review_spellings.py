@@ -79,6 +79,7 @@ def main() -> None:
     ap.add_argument(
         "--suggest", type=Path, help="JSON of suggested changes to show first"
     )
+    ap.add_argument("--no-open", action="store_true")
     args = ap.parse_args()
 
     draft = json.loads(args.draft.read_text(encoding="utf-8"))
@@ -138,7 +139,8 @@ def main() -> None:
     out = OUTPUT_DIR / "translit" / f"review_{args.draft.stem}.html"
     out.write_text(page, encoding="utf-8")
     print(f"{len(draft)} words ({len(suggest) or len(check)} listed first) -> {out}")
-    webbrowser.open(out.as_uri())
+    if not args.no_open:
+        webbrowser.open(out.as_uri())
 
 
 if __name__ == "__main__":
