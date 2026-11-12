@@ -110,7 +110,7 @@ def train(data: list[tuple[list[str], list[int]]], min_count: int, steps: int) -
 
     def table(t):
         t = t.detach().tolist()
-        kept = {v: round(x, 3) for v, x in zip(vocab, t) if abs(x) >= 0.05}
+        kept = {v: round(x, 3) for v, x in zip(vocab, t, strict=True) if abs(x) >= 0.05}
         return kept | {OTHER: round(t[0], 3)}
 
     return {
@@ -154,7 +154,8 @@ def test(data, model, max_run: int, min_score: float) -> str:
             floor = min_score if name == "learned" else -float("inf")
             pred = positions(split(ws, scores, max_run, min_score=floor))
             at, gold = 0, set()
-            for w, label in zip(ws, labels):
+            # One label per boundary: the last word has none.
+            for w, label in zip(ws, labels, strict=False):
                 at += len(w)
                 if label:
                     gold.add(at)

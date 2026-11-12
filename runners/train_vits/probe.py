@@ -30,9 +30,8 @@ def page() -> None:
         json.loads(line)
         for line in (PROBES / "probes.jsonl").read_text(encoding="utf-8").splitlines()
     ]
-    columns = ["base"] + sorted(
-        (d.name for d in PROBES.iterdir() if d.is_dir() and d.name.isdigit()), key=int
-    )
+    steps = (d.name for d in PROBES.iterdir() if d.is_dir() and d.name.isdigit())
+    columns = ["base", *sorted(steps, key=int)]
     head = "".join(
         f"<th>{'before (sengtha)' if c == 'base' else f'step {c}'}</th>"
         for c in columns

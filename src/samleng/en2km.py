@@ -16,7 +16,7 @@ CMUDICT_COMMIT = "74790861f652b15e4ac49015a90074ad62a27690"
 CMUDICT_SHA256 = "81917843c7f44ce2b094ac63873c2c7a4cf802040792c455ba3ca406891c3d22"
 CMUDICT_PATH = DATA_DIR / "cmudict" / "cmudict.dict"
 
-A, O = 0, 1  # consonant series
+A, O = 0, 1  # consonant series  # noqa: E741
 
 # Onset consonants: (a-series letter, o-series letter).
 ONSET = {

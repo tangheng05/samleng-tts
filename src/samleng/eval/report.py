@@ -1,3 +1,5 @@
+"""Summary tables: error rates per system and category, and paired comparisons."""
+
 import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr, wilcoxon
@@ -72,7 +74,9 @@ def compare_to_base(df: pd.DataFrame, base: str, metric=khmer_cer) -> pd.DataFra
 
     Expects columns: system, id, category, ref, hyp. p is a paired Wilcoxon test.
     """
-    df = df.assign(cer=[metric(r, h) for r, h in zip(df["ref"], df["hyp"].fillna(""))])
+    df = df.assign(
+        cer=[metric(r, h) for r, h in zip(df["ref"], df["hyp"].fillna(""), strict=True)]
+    )
     ref = df[df["system"] == base].set_index("id")["cer"]
     rows = []
     for system, g in df[df["system"] != base].groupby("system"):

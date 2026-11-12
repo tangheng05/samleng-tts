@@ -17,3 +17,5 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pytest -q
+      - name: Shell syntax of the queue scripts
+        run: zsh -n ops/jobqueue.sh && zsh -n ops/watch_run.sh

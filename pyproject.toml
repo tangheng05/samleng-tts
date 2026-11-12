@@ -6,6 +6,16 @@ readme = "README.md"
 authors = [
     { name = "Tang Heng", email = "76139625+tangheng05@users.noreply.github.com" }
 ]
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["khmer", "text-to-speech", "tts", "benchmark", "distillation", "low-resource"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: Khmer",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
 requires-python = ">=3.11"
 dependencies = [
     "datasets>=5.1.0",
@@ -23,6 +33,10 @@ dependencies = [
     "transformers>=5.22.1",
 ]
 
+[project.urls]
+Repository = "https://github.com/tangheng05/samleng-tts"
+Benchmark = "https://huggingface.co/datasets/hengthegoat/khmertts-bench-v1"
+
 [build-system]
 requires = ["uv_build>=0.13.0,<0.14.0"]
 build-backend = "uv_build"
@@ -39,3 +53,11 @@ module-name = "samleng"
 [tool.uv.workspace]
 # Model runners pin conflicting deps, so each keeps its own env and lockfile.
 exclude = ["runners/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "RUF"]
+# E501: the formatter owns line length. RUF001-003: Khmer text looks "ambiguous" to ruff.
+ignore = ["E501", "RUF001", "RUF002", "RUF003"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
