@@ -13,9 +13,13 @@ from pathlib import Path
 
 import soundfile as sf
 import torch
+from huggingface_hub import snapshot_download
 from voxcpm import VoxCPM
 
 MODEL_ID = "openbmb/VoxCPM2"
+# The revision all teacher audio so far was recorded with; a silent upstream update would
+# change the teacher between batches.
+REVISION = "7936080b41163874f38610f46f438e2c0757f9fd"
 
 
 def pick_device() -> str:
@@ -46,7 +50,10 @@ def main() -> None:
     device = pick_device()
     # torch.compile optimizations are CUDA-only.
     model = VoxCPM.from_pretrained(
-        MODEL_ID, load_denoiser=False, optimize=device == "cuda", device=device
+        snapshot_download(MODEL_ID, revision=REVISION),
+        load_denoiser=False,
+        optimize=device == "cuda",
+        device=device,
     )
     sr = model.tts_model.sample_rate
 

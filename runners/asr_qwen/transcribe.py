@@ -7,9 +7,12 @@ import argparse
 import json
 
 import torch
+from huggingface_hub import snapshot_download
 from qwen_asr import Qwen3ASRModel
 
 MODEL_ID = "seanghay/Qwen3-ASR-0.6B-Khmer"
+# Every CER so far was judged by this revision.
+REVISION = "351f1cc594f084e4899ef6cf7bbb17ec64484080"
 
 
 def pick_device() -> str:
@@ -28,7 +31,7 @@ def main() -> None:
 
     device = args.device or pick_device()
     model = Qwen3ASRModel.from_pretrained(
-        MODEL_ID,
+        snapshot_download(MODEL_ID, revision=REVISION),
         dtype=torch.float32 if device == "cpu" else torch.float16,
         device_map=device,
         max_inference_batch_size=args.batch_size,
