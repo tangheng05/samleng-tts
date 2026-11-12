@@ -1,5 +1,7 @@
 # Every open Khmer voice, measured, and where Gemini goes silent
 
+*10 November 2026 · Part 2 of the Samleng-TTS write-ups · Previous: [How good is open Khmer TTS in 2026?](01-how-good-is-open-khmer-tts.md) · [Project README](../../README.md) (latest results)*
+
 In the [first post](01-how-good-is-open-khmer-tts.md) I compared two models on 100 sentences. Since then the benchmark has grown to 320 sentences, and I ran every open Khmer text-to-speech model I could find through it, plus Google's Gemini: version 2.5, the voice my tutoring app uses today, and the newer 3.8.
 
 ## The benchmark

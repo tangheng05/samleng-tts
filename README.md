@@ -4,9 +4,19 @@ Real-time, native-sounding Khmer text-to-speech that runs on everyday hardware, 
 
 > **Status (November 2026):** benchmark published; a small voice distilled from a 2B teacher is training. First results below are preliminary.
 
-Write-ups: [How good is open Khmer TTS in 2026?](docs/posts/01-how-good-is-open-khmer-tts.md) · [Every open Khmer voice, measured](docs/posts/02-every-open-khmer-tts-model.md)
+| | |
+|---|---|
+| **Benchmark** | [KhmerTTS-Bench v1](bench/README.md) · [on Hugging Face](https://huggingface.co/datasets/hengthegoat/khmertts-bench-v1) |
+| **Guides** | [The distillation pipeline](docs/pipeline.md) · [Model runners](runners/README.md) · [Job queue](ops/README.md) |
+| **Write-ups** | [1. How good is open Khmer TTS in 2026?](docs/posts/01-how-good-is-open-khmer-tts.md) (6 Nov 2026) · [2. Every open Khmer voice, measured](docs/posts/02-every-open-khmer-tts-model.md) (10 Nov 2026) |
 
-## What is here
+**Contents:** [Overview](#overview) · [Results](#results) · [Quick start](#quick-start) · [Repository layout](#repository-layout) · [How results stay trustworthy](#how-results-stay-trustworthy) · [Limitations](#limitations) · [Roadmap](#roadmap) · [Acknowledgements](#acknowledgements) · [License](#license)
+
+## Overview
+
+Open Khmer TTS has improved fast, but there was no shared way to measure it, and models still struggle with real-world text: numbers, dates, money and Khmer–English code-switching. Automatic scores also miss what native listeners hear, so this project pairs every automatic number with human ratings.
+
+What is here:
 
 1. **KhmerTTS-Bench v1**: 320 native-reviewed sentences (pure Khmer, long, names, numbers, Khmer–English mixed, English) with fixed scoring code. Also on Hugging Face: [hengthegoat/khmertts-bench-v1](https://huggingface.co/datasets/hengthegoat/khmertts-bench-v1).
 2. **A leaderboard** of every open Khmer TTS model we could run, plus Gemini TTS as a commercial reference.
@@ -14,11 +24,9 @@ Write-ups: [How good is open Khmer TTS in 2026?](docs/posts/01-how-good-is-open-
 4. **A Khmer text front end**: numbers, dates, times, money, abbreviations and English words turned into what a Khmer speaker would say.
 5. **Listening-test tools**: blind 1–5 ratings and paired A/B comparisons with proper statistics.
 
-## Why
+## Results
 
-Open Khmer TTS has improved fast, but there was no shared way to measure it, and models still struggle with real-world text: numbers, dates, money and Khmer–English code-switching. Automatic scores also miss what native listeners hear, so this project pairs every automatic number with human ratings.
-
-## KhmerTTS-Bench v1 results (320 sentences)
+### KhmerTTS-Bench v1 (320 sentences)
 
 [`bench/khmertts_bench_v1.jsonl`](bench/khmertts_bench_v1.jsonl): 80 pure Khmer, 40 long, 50 names, 60 numbers/dates/money, 70 Khmer–English mixed, 20 English, all reviewed by a native speaker. Text is fed to each model as written (numbers as digits). Also on Hugging Face: [hengthegoat/khmertts-bench-v1](https://huggingface.co/datasets/hengthegoat/khmertts-bench-v1) (CC-BY-4.0).
 
@@ -40,7 +48,7 @@ Open Khmer TTS has improved fast, but there was no shared way to measure it, and
 - **Gemini 3.8 read all 320 sentences** and is the most accurate system here. It reads a style prefix such as "Say in a warm, friendly voice:" out loud, so it gets the bare text (same voice, Callirrhoe). Gemini 2.5 needs that prefix to read rather than answer.
 - With our text frontend (numbers spelled out), number errors mostly disappear; v1 results with the frontend will follow. Zio's own number normalizer is not used.
 
-## Distillation results so far (preliminary)
+### Distillation so far (preliminary)
 
 A first student trained on only 1.2 hours of teacher audio. Scores are on the 300 Khmer sentences of the benchmark with the text front end (numbers spelled out); lower CER is better. MOS is a blind 1–5 rating of 25 sentences by **one** native speaker (the author), so read it as a signal, not a result.
 
@@ -57,7 +65,10 @@ A first student trained on only 1.2 hours of teacher audio. Scores are on the 30
 - With Khmer-script input, "never-seen" means the Latin form never appeared in training text; a few common loanwords (Facebook, video …) do occur in Khmer script in the training sentences.
 - A larger run (about 8.7 hours of teacher audio in a new voice, English in both scripts) is training now. Multi-rater listening tests follow.
 
-## Pilot results (Phase 0, 100 sentences)
+### Pilot (Phase 0, 100 sentences)
+
+<details>
+<summary>Show the pilot results</summary>
 
 [`bench/pilot_v1.jsonl`](bench/pilot_v1.jsonl): 40 pure Khmer, 10 long, 25 numbers/dates/money, 25 Khmer–English mixed, all reviewed by a native speaker. All rows except "raw digits" use the text frontend.
 
@@ -75,6 +86,8 @@ A first student trained on only 1.2 hours of teacher audio. Scores are on the 30
 - **Mixed sentences use human ratings, not CER.** The ASR spells English words inconsistently, so CER doesn't track quality there (Spearman −0.06 between CER and human scores for VoxCPM2). MOS is a blind 1–5 rating with ITU-T P.800 labels by one native speaker (the author), with 25 sentences, a 95% CI over sentences, and loudness-normalized clips. VoxCPM2 scored higher on all 25 sentences (paired Wilcoxon p < 0.001).
 - An automatic naturalness predictor (UTMOSv2) did not agree with the human ratings on 30 rated mixed clips (Spearman 0.25) and couldn't separate the two systems, so it is not reported.
 - **Real-time factor** is generation time ÷ audio length (below 1 = faster than real time). MMS runs on CPU, VoxCPM2 on Apple Silicon (MPS) with 16 GB of memory. We report the median because a few VoxCPM2 clips are much slower when memory is tight.
+
+</details>
 
 ## Quick start
 

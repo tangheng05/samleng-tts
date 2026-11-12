@@ -1,5 +1,7 @@
 # How good is open Khmer text-to-speech in 2026?
 
+*6 November 2026 · Part 1 of the Samleng-TTS write-ups · Next: [Every open Khmer voice, measured](02-every-open-khmer-tts-model.md) · [Project README](../../README.md)*
+
 Khmer is spoken by about 17 million people, yet there is no shared way to measure how well a machine reads it aloud. So I built a small benchmark, ran two open models through it, and rated the hardest sentences myself as a native speaker. Here's what I found.
 
 ## The test
