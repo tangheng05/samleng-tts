@@ -46,7 +46,7 @@ A first student trained on only 1.2 hours of teacher audio. Scores are on the 30
 
 | | All-Khmer CER (median) | Mixed sentences with never-seen English words | MOS (1 rater) |
 |---|---|---|---|
-| sengtha (the base model) | 10.4% | 36.7% | 2.16 ± 0.37 |
+| Base model, before our training | 10.4% | 36.7% | 2.16 ± 0.37 |
 | Student A, 1.2 h of teacher audio | 5.7% (3 seeds) | 23.7% | 3.40 ± 0.29 |
 | Student B, same audio, English written in Khmer script | 6.1% | 13.2% | not rated |
 | Teacher (VoxCPM2, fixed voice) | 3.1% | 12.9% | 3.72 ± 0.25 |
@@ -86,11 +86,11 @@ cp .env.example .env         # optional: data/output folders, API keys
 uv run pytest -q             # unit tests, no model downloads
 
 # Score open models on the benchmark (downloads models on first use)
-uv run python scripts/baseline.py bench/khmertts_bench_v1.jsonl --systems sengtha mms --verbalize
+uv run python scripts/baseline.py bench/khmertts_bench_v1.jsonl --systems mms mms_kto --verbalize
 
 # Blind listening test on the clips of two systems
 uv run python scripts/mos.py serve --study demo --bench bench/khmertts_bench_v1.jsonl --category pure \
-    --system sengtha=baseline/khmertts_bench_v1_verbalized/sengtha --system mms=baseline/khmertts_bench_v1_verbalized/mms
+    --system mms=baseline/khmertts_bench_v1_verbalized/mms --system mms_kto=baseline/khmertts_bench_v1_verbalized/mms_kto
 uv run python scripts/mos.py report --study demo
 ```
 
@@ -138,7 +138,7 @@ Models that need conflicting dependencies (the teacher, the ASR judge, the VITS 
 
 ## Roadmap
 
-1. Finish the 8.7-hour run and release the model (`CC-BY-SA-4.0`, inherited from sengtha) with a streaming server and a demo.
+1. Finish the 8.7-hour run and release the model (`CC-BY-SA-4.0`) with a streaming server and a demo.
 2. Multi-rater A/B study against Gemini TTS; a challenge set for errors that CER cannot hear.
 3. A better teacher (fine-tuned on real Khmer speech) and, if ratings call for it, a stronger 24 kHz student.
 4. A technical report.
@@ -169,7 +169,7 @@ No voices are used without consent; the current voice is synthetic. Generated au
 
 ## License
 
-Code: MIT. Benchmark and our own training sentences and spelling lists: CC-BY-4.0 (details in [`texts/README.md`](texts/README.md); the Wikipedia sentences stay CC-BY-SA-3.0). Models and third-party datasets carry their own licenses (see the tables above); a model fine-tuned from sengtha is CC-BY-SA-4.0.
+Code: MIT. Benchmark and our own training sentences and spelling lists: CC-BY-4.0 (details in [`texts/README.md`](texts/README.md); the Wikipedia sentences stay CC-BY-SA-3.0). Models and third-party datasets carry their own licenses (see the tables above); our released voice will be CC-BY-SA-4.0, the license of its base model.
 
 ## Citation
 

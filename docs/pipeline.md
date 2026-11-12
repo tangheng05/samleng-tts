@@ -57,7 +57,7 @@ uv run python train.py ../../outputs/train/my_run/manifest.jsonl ../../outputs/t
 uv run python train.py <manifest> <out> --continue-run <out>/<run folder> --device mps --epochs 30
 ```
 
-Fine-tunes [sengtha](https://huggingface.co/sengtha/khmer-tts-female-v2) (Coqui VITS). Held-out clips never share audio with training rows.
+Fine-tunes the base Coqui VITS voice (credited in the README). Held-out clips never share audio with training rows.
 
 ## 6. Score checkpoints
 
