@@ -1,6 +1,6 @@
 # Samleng-TTS
 
-Real-time, native-sounding Khmer text-to-speech that runs on everyday hardware, plus an open benchmark for Khmer TTS with human ratings. *Samleng* (សំឡេង) means "voice" in Khmer.
+Real-time, native-sounding Khmer text-to-speech that runs on everyday hardware, plus an open benchmark for Khmer TTS with human ratings.
 
 > **Status (November 2026):** benchmark published; a small voice distilled from a 2B teacher is training. First results below are preliminary.
 
