@@ -37,6 +37,13 @@ def main() -> None:
         default=LENGTH_SCALE,
         help="higher = slower speech",
     )
+    ap.add_argument("--noise-scale", type=float, default=NOISE_SCALE)
+    ap.add_argument(
+        "--noise-scale-dp",
+        type=float,
+        default=NOISE_SCALE_DP,
+        help="randomness of the timing; lower = steadier rhythm",
+    )
     args = ap.parse_args()
 
     ckpt = args.checkpoint or hf_hub_download(REPO, "best_model.pth", revision=REV)
@@ -44,8 +51,8 @@ def main() -> None:
     synth = Synthesizer(tts_checkpoint=ckpt, tts_config_path=cfg, use_cuda=False)
     model = synth.tts_model
     model.length_scale = args.length_scale
-    model.inference_noise_scale = NOISE_SCALE
-    model.inference_noise_scale_dp = NOISE_SCALE_DP
+    model.inference_noise_scale = args.noise_scale
+    model.inference_noise_scale_dp = args.noise_scale_dp
     sr = synth.output_sample_rate
 
     out_dir = Path(args.out_dir)

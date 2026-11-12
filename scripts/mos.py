@@ -12,6 +12,7 @@ import threading
 import webbrowser
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
@@ -156,6 +157,9 @@ def main() -> None:
         metavar="LABEL=DIR",
         help="audio folder (relative to outputs/); repeat per system",
     )
+    serve.add_argument(
+        "--ids", help="file with one sentence id per line (replaces --category)"
+    )
     serve.add_argument("--port", type=int, default=8765)
     serve.add_argument("--no-open", action="store_true")
     report = sub.add_parser("report", help="summarize ratings")
@@ -180,7 +184,12 @@ def main() -> None:
         write_report(study, merge_systems(ratings, groups), groups)
         return
 
-    items = [it for it in load_bench(args.bench) if it.category == args.category]
+    items = load_bench(args.bench)
+    if args.ids:
+        keep = set(Path(args.ids).read_text().split())
+        items = [it for it in items if it.id in keep]
+    else:
+        items = [it for it in items if it.category == args.category]
     clips = build_clips(items, parse_systems(args.system))
     server = ThreadingHTTPServer(
         ("127.0.0.1", args.port), make_handler(clips, ratings_path)

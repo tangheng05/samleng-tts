@@ -2,6 +2,8 @@
 
 uv run python scripts/eval_checkpoint.py outputs/train/distill_v1_A/<run folder>
 uv run python scripts/eval_checkpoint.py <run folder> --step 2000
+uv run python scripts/eval_checkpoint.py <run B folder> --translit            # English in Khmer script
+uv run python scripts/eval_checkpoint.py <run folder> --tag seed1 --synth="--seed 1"
 
 Text is verbalized like the training data. Mixed sentences are split into
 mixed_unseen / mixed_seen / mixed_partial (bench/khmertts_bench_v1_mixed_split.json).
@@ -26,7 +28,7 @@ from samleng.eval.guard import guard_flags, signal_stats
 from samleng.eval.report import compare_to_base
 from samleng.paths import OUTPUT_DIR, ROOT
 from samleng.runners import read_jsonl, run, write_jsonl
-from samleng.text import verbalize
+from samleng.text import khmer_script, verbalize
 
 BENCH = ROOT / "bench" / "khmertts_bench_v1.jsonl"
 SPLIT = ROOT / "bench" / "khmertts_bench_v1_mixed_split.json"
@@ -41,13 +43,15 @@ def checkpoints(run_dir: Path) -> dict[int, Path]:
     }
 
 
-def score(out: Path, items, ckpt: Path | None, config: Path | None) -> pd.DataFrame:
+def score(
+    out: Path, items, ckpt: Path | None, config: Path | None, spoken=verbalize, synth=()
+) -> pd.DataFrame:
     """Synthesize + transcribe once per folder; later calls read the cached results.csv."""
     if (out / "results.csv").exists():
         return pd.read_csv(out / "results.csv")
     manifest = out / "tts_in.jsonl"
-    write_jsonl(manifest, [{"id": it.id, "text": verbalize(it.text)} for it in items])
-    extra = ["--checkpoint", ckpt, "--config", config] if ckpt else []
+    write_jsonl(manifest, [{"id": it.id, "text": spoken(it.text)} for it in items])
+    extra = ["--checkpoint", ckpt, "--config", config, *synth] if ckpt else []
     run("train_vits", "synthesize.py", manifest, out / "wav", *extra)
     clips = read_jsonl(out / "wav" / "results.jsonl")
     asr_in, asr_out = out / "asr_in.jsonl", out / "asr_out.jsonl"
@@ -125,6 +129,15 @@ def main() -> None:
     ap.add_argument(
         "--notify", action="store_true", help="send a phone progress update"
     )
+    ap.add_argument(
+        "--translit",
+        action="store_true",
+        help="feed English in Khmer script, to the checkpoint and to base",
+    )
+    ap.add_argument("--tag", help="score into <run>_<tag> (use with --synth)")
+    ap.add_argument(
+        "--synth", default="", help="extra synthesize.py options for the checkpoint"
+    )
     args = ap.parse_args()
 
     ckpts = checkpoints(args.run_dir)
@@ -132,11 +145,16 @@ def main() -> None:
         raise SystemExit(f"no checkpoint_*.pth in {args.run_dir}")
     step = args.step or max(ckpts)
     items = [it for it in load_bench(BENCH) if it.category != "english"]
-    name = args.run_dir.parent.name
+    parts = [args.run_dir.parent.name, "translit" if args.translit else None, args.tag]
+    name = "_".join(p for p in parts if p)
+    base = EVAL / ("base_translit" if args.translit else "base")
+    spoken = khmer_script if args.translit else verbalize
     config = args.run_dir / "config.json"
 
-    frames = [score(EVAL / "base", items, None, None).assign(system="base")]
-    score(EVAL / name / str(step), items, ckpts[step], config)
+    frames = [score(base, items, None, None, spoken).assign(system="base")]
+    score(
+        EVAL / name / str(step), items, ckpts[step], config, spoken, args.synth.split()
+    )
     for d in sorted((EVAL / name).iterdir()):
         if d.name.isdigit() and (d / "results.csv").exists():
             frames.append(pd.read_csv(d / "results.csv").assign(system=f"step{d.name}"))
@@ -148,7 +166,9 @@ def main() -> None:
     rows = table.to_dict("records")
     table["p"] = table["p"].map("{:.2g}".format)
     text = (
-        f"# {name}: checkpoints vs base sengtha (bench v1, verbalized)\n\n"
+        f"# {name}: checkpoints vs base sengtha (bench v1, verbalized"
+        + (", English fed in Khmer script" if args.translit else "")
+        + ")\n\n"
         "Median per-sentence CER with English words in Khmer script on both sides "
         "(mixed CER, same as CER without English); better/worse/same count "
         "sentences vs base; p = paired Wilcoxon.\n\n"
@@ -159,7 +179,7 @@ def main() -> None:
     from samleng.eval.spk import SpeakerEncoder
 
     enc = SpeakerEncoder()
-    guards = {"base": guard(EVAL / "base", enc)}
+    guards = {"base": guard(base, enc)}
     for d in sorted(
         (EVAL / name).iterdir(), key=lambda d: int(d.name) if d.name.isdigit() else -1
     ):
