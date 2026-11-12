@@ -2,6 +2,8 @@
 
 import random
 import re
+from collections import Counter
+from collections.abc import Iterable
 
 import librosa
 import numpy as np
@@ -107,14 +109,20 @@ def mixed_group(item_id: str, category: str, split: dict) -> str:
     raise KeyError(f"{item_id} is not in the mixed split")
 
 
+def has_held_out_word(text: str, banned: set[str]) -> bool:
+    """True if text has a held-out English word, also inside a longer word ("poster" has "post")."""
+    return any(
+        b in w for w in english_words(text) for b in banned if w == b or len(b) > 3
+    )
+
+
 def distill_problems(text: str, leak: LeakCheck, banned: set[str]) -> list[str]:
     """Why a sentence can't be training text: bench overlap, or a held-out English word.
 
     Held-out words also count inside longer words ("poster" teaches "post").
     """
-    words = english_words(text)
     problems = []
-    if any(b in w for w in words for b in banned if w == b or len(b) > 3):
+    if has_held_out_word(text, banned):
         problems.append("held-out word")
     if leak(text):
         problems.append("bench overlap")
@@ -156,3 +164,63 @@ def both_scripts(row: dict, words: dict[str, str]) -> list[dict]:
     if khmer != latin and not _EN_WORD.search(khmer):
         out.append(row | {"id": row["id"] + "-km", "text": khmer})
     return out
+
+
+# sengtha's alphabet after its cleaner lowercases the text: Khmer block, a-z, its punctuation.
+UNREADABLE = re.compile(r"[^\u1780-\u17ffa-z!,.?:;()\"'«»“”\-–—%/ ]")
+
+
+def training_rows(
+    rows: Iterable[dict], words: dict[str, str], banned: set[str]
+) -> tuple[list[dict], Counter]:
+    """Rows a student trains on, English in both scripts, and counts of what was left out.
+
+    Left out: rows the checks rejected (by reason) and rows with a character the model
+    cannot read. A held-out English word is an error: the bench split would be spoiled.
+    """
+    out, dropped = [], Counter()
+    for r in rows:
+        if "reject" in r:
+            dropped[r["reject"]] += 1
+            continue
+        if has_held_out_word(r["text"], banned):
+            raise ValueError(f"{r['id']}: held-out English word in training text")
+        versions = both_scripts(r, words)
+        if any(UNREADABLE.search(v["text"].lower()) for v in versions):
+            dropped["unreadable"] += 1
+            continue
+        out += versions
+    ids = Counter(r["id"] for r in out)
+    if clash := [i for i, n in ids.items() if n > 1]:
+        raise ValueError(f"duplicate ids: {clash[:5]}")
+    return out, dropped
+
+
+def khmer_script_leaks(spellings: dict[str, str], texts: Iterable[str]) -> set[str]:
+    """Held-out English words that still occur in training text, written in Khmer script.
+
+    `spellings` maps each held-out word to its Khmer spelling ("" if it has none). Common
+    loanwords (Facebook, video) appear in ordinary Khmer text, so a sentence with them is not
+    strictly unseen. A word with no spelling, or one too short to match safely, counts as leaked.
+    """
+    targets = {
+        w: normalize_khmer(km, spell_numbers=False) for w, km in spellings.items()
+    }
+    leaked = {w for w, km in targets.items() if len(km) < 3}
+    todo = {w: km for w, km in targets.items() if w not in leaked}
+    for text in texts:
+        if not todo:
+            break
+        t = normalize_khmer(text, spell_numbers=False)
+        for w in [w for w, km in todo.items() if km in t]:
+            leaked.add(w)
+            del todo[w]
+    return leaked
+
+
+def strict_unseen(items, split: dict, leaked: set[str]) -> set[str]:
+    """Ids of `unseen` mixed sentences none of whose English words leaked in Khmer script."""
+    unseen = set(split["unseen"])
+    return {
+        it.id for it in items if it.id in unseen and not english_words(it.text) & leaked
+    }

@@ -136,3 +136,43 @@ def test_both_scripts_adds_a_khmer_copy_only_when_fully_spelled():
     # No English at all: one row, unchanged.
     plain = {"id": "p-1", "text": "ពូកែណាស់ ។"}
     assert both_scripts(plain, words) == [plain]
+
+
+def test_training_rows_filters_and_refuses_held_out_words():
+    import pytest
+
+    from samleng.data import training_rows
+
+    words = {"file": "ហ្វាយ"}
+    rows = [
+        {"id": "a", "text": "សូមផ្ញើ file ។"},
+        {"id": "b", "text": "ពូកែណាស់ ។"},
+        {"id": "c", "text": "មិនល្អ ។", "reject": "misread"},
+        {"id": "d", "text": "ចាម ជ្វា និងភូមា… ។"},
+    ]
+    out, dropped = training_rows(rows, words, banned={"post"})
+    assert [r["id"] for r in out] == ["a", "a-km", "b"]
+    assert dropped == {"misread": 1, "unreadable": 1}
+    with pytest.raises(ValueError, match="held-out"):
+        training_rows([{"id": "e", "text": "មើល poster នេះ ។"}], words, banned={"post"})
+    with pytest.raises(ValueError, match="duplicate"):
+        training_rows([rows[1], rows[1]], words, banned=set())
+
+
+def test_strict_unseen_drops_sentences_whose_words_occur_in_khmer_script():
+    from samleng.bench import Item
+    from samleng.data import khmer_script_leaks, strict_unseen
+
+    spellings = {"facebook": "ហ្វេសប៊ុក", "upload": "អាប់ឡូត", "ok": "", "qr": "ឃ្យូ"}
+    texts = ["គាត់ចូលចិត្តលេង ហ្វេស ប៊ុក រាល់ថ្ងៃ ។", "ថ្ងៃនេះមេឃស្រឡះ ។"]
+    leaked = khmer_script_leaks(spellings, texts)
+    # Spaces are ignored; a missing spelling counts as leaked; short spellings need 3+ letters.
+    assert leaked == {"facebook", "ok"}
+    items = [
+        Item("mixed-01", "mixed", "សូម upload រូបភាព"),
+        Item("mixed-02", "mixed", "បើក Facebook មើល"),
+        Item("mixed-03", "mixed", "សូម upload ទៅ Facebook"),
+        Item("mixed-04", "mixed", "សូម upload ឯកសារ"),
+    ]
+    split = {"unseen": ["mixed-01", "mixed-02", "mixed-03"], "seen": ["mixed-04"]}
+    assert strict_unseen(items, split, leaked) == {"mixed-01"}
