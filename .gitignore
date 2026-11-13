@@ -31,3 +31,4 @@ CLAUDE.local.md
 
 # Night-shift operator config: private, kept on the MacBook and the Mac mini only
 ops/operator/
+web/data/status.json

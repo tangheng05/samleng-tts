@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="km">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Samleng សំឡេង៖ សំឡេងខ្មែរបើកចំហ ដែលស្ដាប់ទៅដូចមនុស្សពិត</title>
+  <meta name="description" content="Samleng គឺជាម៉ូដែលបំប្លែងអត្ថបទទៅជាសំឡេងខ្មែរបើកចំហ។ វាអានលេខ ឈ្មោះ និងប្រយោគខ្មែរលាយអង់គ្លេសបានត្រឹមត្រូវ ហើយដំណើរការលើកុំព្យូទ័រធម្មតា។ មើលការហ្វឹកហាត់ផ្ទាល់។">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#EEEBE5">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0C0E16">
+  <link rel="alternate" hreflang="km" href="/">
+  <link rel="alternate" hreflang="en" href="/en">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Samleng">
+  <meta property="og:locale" content="km_KH">
+  <meta property="og:title" content="Samleng សំឡេង: សំឡេងខ្មែរបើកចំហ">
+  <meta property="og:description" content="ម៉ូដែល TTS ខ្មែរបើកចំហ ដែលអានលេខ ឈ្មោះ និងប្រយោគខ្មែរលាយអង់គ្លេសបានត្រឹមត្រូវ។ មើលការហ្វឹកហាត់ផ្ទាល់។">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,200..900&amp;family=Kantumruy+Pro:wght@300..700&amp;family=Koulen&amp;display=swap">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-theme="paper" data-lang="km" data-status="/data/status.json">
+<script>
+  let saved = null;
+  try { saved = localStorage.getItem("samleng-theme"); } catch (e) {}
+  document.body.dataset.theme = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "night" : "paper");
+</script>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="mark" viewBox="0 0 24 24"><g fill="currentColor"><rect x="2" y="9" width="3" height="6" rx="1.5" /><rect x="6.75" y="5" width="3" height="14" rx="1.5" /><rect x="11.5" y="2" width="3" height="20" rx="1.5" /><rect x="16.25" y="6.5" width="3" height="11" rx="1.5" /><rect x="21" y="10" width="2" height="4" rx="1" /></g></symbol>
+    <symbol id="gh" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z" /></symbol>
+    <symbol id="down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+    <symbol id="play" viewBox="0 0 16 16"><path d="M4 2.5v11l9.5-5.5z" fill="currentColor" /></symbol>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></symbol>
+  </defs>
+</svg>
+
+<section class="hero" id="top">
+  <header class="hd wrap">
+    <a class="brand" href="#top"><svg class="mark"><use href="#mark" /></svg>Samleng <small>សំឡេង</small></a>
+    <nav>
+      <a class="u sec-link" href="#listen">ស្ដាប់</a>
+      <a class="u sec-link" href="#results">លទ្ធផល</a>
+      <a class="u sec-link" href="#how">របៀបដំណើរការ</a>
+      <a class="u sec-link" href="#log">កំណត់ហេតុ</a>
+      <a lang="en" hreflang="en" class="u lang" href="/en">English</a>
+      <button type="button" class="theme-btn" id="theme-btn" aria-label="ពន្លឺ / ងងឹត">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <mask id="moon-cut"><rect width="24" height="24" fill="#fff" /><circle class="cut" cx="25" cy="3" r="7" fill="#000" /></mask>
+          <circle class="core" cx="12" cy="12" r="5" fill="currentColor" mask="url(#moon-cut)" />
+          <g class="rays" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1.8v2.2M12 20v2.2M1.8 12h2.2M20 12h2.2M4.8 4.8l1.5 1.5M17.7 17.7l1.5 1.5M4.8 19.2l1.5-1.5M17.7 6.3l1.5-1.5" /></g>
+        </svg>
+      </button>
+      <a class="outline" href="https://github.com/tangheng05/samleng-tts" aria-label="GitHub"><svg><use href="#gh" /></svg><span>GitHub</span></a>
+    </nav>
+  </header>
+
+  <div class="hero-body wrap grid">
+    <div class="hero-copy">
+      <h1 class="hero-h mask"><span class="in-mask">សំឡេងខ្មែរ<br>ដូចមនុស្សពិត</span></h1>
+      <p class="t-body rv" style="--dl:.25s">Samleng គឺជាម៉ូដែលបំប្លែងអត្ថបទទៅជាសំឡេងខ្មែរ (TTS) ដែលបើកចំហ។ វាអានលេខ ឈ្មោះ និងប្រយោគខ្មែរលាយអង់គ្លេសបានត្រឹមត្រូវ ហើយដំណើរការលើកុំព្យូទ័រធម្មតា។</p>
+      <div class="hp rv" id="hp" style="--dl:.4s">
+        <button type="button" class="play" aria-label="ស្ដាប់គំរូ"><svg class="i-play" viewBox="0 0 16 16"><path d="M4 2.5v11l9.5-5.5z" fill="currentColor"/></svg><svg class="i-pause" viewBox="0 0 16 16"><path d="M4 2.5h3v11H4zm5 0h3v11H9z" fill="currentColor"/></svg></button>
+        <div class="hp-main">
+          <div class="wf" id="hp-wf"></div>
+          <p class="hp-say" id="hp-say" lang="km"></p>
+        </div>
+      </div>
+    </div>
+
+    <aside class="run rv" style="--dl:.4s" aria-live="polite">
+      <div class="run-top"><span class="state" data-s="idle" data-live="state">កំពុងភ្ជាប់…</span><span class="updated" data-live="updated"></span></div>
+      <p class="run-pct"><b data-live="pct">–</b><span>នៃការហ្វឹកហាត់បានបញ្ចប់</span></p>
+      <div class="epochs" id="epochs" role="img" aria-label="ជុំ"></div>
+      <p class="run-line"><span>ជុំ <b data-live="epoch">–</b></span><span>ជំហាន <b data-live="step">–</b> / <span data-live="total">–</span></span><span>ចប់ <b data-live="finish">–</b></span></p>
+      <div class="gauge">
+        <p class="gauge-title">អត្រាកំហុស នៅចំណុចរក្សាទុកចុងក្រោយ</p>
+        <div class="gauge-track" id="gauge"></div>
+        <p class="gauge-note">ចំណុចផ្លាស់ទីទៅស្ដាំ នៅពេលម៉ូដែលរៀនបានល្អជាងមុន។</p>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<main>
+  <section class="sec" id="listen">
+    <div class="wrap">
+      <header class="sec-head grid">
+        <p class="sec-tag t-label rv">(០១) ស្ដាប់</p>
+        <h2 class="t-h2 mask"><span class="in-mask">ប្រយោគដូចគ្នា<br>ម៉ូដែលទាំងបី</span></h2>
+        <p class="t-body rv">ជ្រើសរើសប្រយោគមួយ ហើយប្រៀបធៀបម៉ូដែលដើម Samleng និងម៉ូដែលគ្រូដែលវាបានរៀនតាម។ ប្រយោគទាំងនេះគឺយកមកពីបញ្ជីវាស់របស់យើង មិនមែនរើសតែប្រយោគល្អៗនោះទេ។</p>
+      </header>
+      <div class="listen grid">
+        <ol class="picks rv" id="picks"></ol>
+        <div class="stage rv" style="--dl:.1s">
+          <p class="say" id="say" lang="km"></p>
+          <p class="say-en" id="say-en"></p>
+          <div class="players" id="players"></div>
+          <p class="stage-note">ឃ្លីបទាំងនេះមកពី Samleng v1 (ការហ្វឹកហាត់លើកទីមួយ)។ នៅពេលកំណែដែលកំពុងហ្វឹកហាត់ខាងលើបញ្ចប់ វានឹងមកជំនួសឃ្លីបទាំងនេះ។</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="results">
+    <div class="wrap">
+      <header class="sec-head grid">
+        <p class="sec-tag t-label rv">(០២) លទ្ធផល</p>
+        <h2 class="t-h2 mask"><span class="in-mask">វាស់ដោយម៉ាស៊ីន<br>ស្ដាប់ដោយត្រចៀកខ្មែរ</span></h2>
+        <p class="t-body rv">ម៉ូដែលនីមួយៗអានប្រយោគខ្មែរចំនួន ៣០០ ក្នុង KhmerTTS-Bench។ កម្មវិធីស្គាល់សំឡេង (ASR) កត់ត្រាអ្វីដែលវាឮ ហើយយើងរាប់ចំនួនតួអក្សរដែលខុស។</p>
+      </header>
+      <div class="results rv">
+        <table class="rtable">
+          <thead><tr><th>ម៉ូដែល</th><th class="col-k">អត្រាកំហុស ខ្មែរ</th><th>ពាក្យអង់គ្លេសថ្មី</th><th>ពិន្ទុអ្នកស្ដាប់ (១–៥)</th></tr></thead>
+          <tbody>
+            <tr><td class="sys"><b>ម៉ូដែលដើម</b><small>មុនពេលយើងហ្វឹកហាត់</small></td><td data-k="អត្រាកំហុស ខ្មែរ"><div class="hbar"><b>10.4%</b><span><i style="--v:86.7"></i></span></div></td><td class="val" data-k="ពាក្យអង់គ្លេសថ្មី">36.7%</td><td class="val" data-k="ពិន្ទុអ្នកស្ដាប់">2.16</td></tr>
+            <tr class="ours"><td class="sys"><b>Samleng v1</b><small>ហ្វឹកហាត់លើសំឡេងគ្រូ ១.២ ម៉ោង · 36M</small></td><td data-k="អត្រាកំហុស ខ្មែរ"><div class="hbar"><b>5.7%</b><span><i style="--v:47.5;--dl:.35s"></i></span></div></td><td class="val" data-k="ពាក្យអង់គ្លេសថ្មី">23.7%</td><td class="val" data-k="ពិន្ទុអ្នកស្ដាប់">3.40</td></tr>
+            <tr><td class="sys"><b>គ្រូ · VoxCPM2</b><small>2B ប៉ារ៉ាម៉ែត្រ · ត្រូវការ GPU</small></td><td data-k="អត្រាកំហុស ខ្មែរ"><div class="hbar"><b>3.1%</b><span><i style="--v:25.8;--dl:.5s"></i></span></div></td><td class="val" data-k="ពាក្យអង់គ្លេសថ្មី">12.9%</td><td class="val" data-k="ពិន្ទុអ្នកស្ដាប់">3.72</td></tr>
+            <tr><td class="sys"><b>Gemini 3.8 TTS</b><small>សេវាបង់ប្រាក់របស់ Google</small></td><td data-k="អត្រាកំហុស ខ្មែរ"><div class="hbar"><b>2.2%</b><span><i style="--v:18.3;--dl:.65s"></i></span></div></td><td class="val na" data-k="ពាក្យអង់គ្លេសថ្មី">–</td><td class="val" data-k="ពិន្ទុអ្នកស្ដាប់">3.68</td></tr>
+          </tbody>
+        </table>
+        <ul class="notes-list">
+          <li><b>អត្រាកំហុស</b><p class="t-small">មេដ្យាន (median) នៃភាគរយតួអក្សរដែលប្រព័ន្ធស្គាល់សំឡេងសរសេរខុស។ ពិន្ទុអាចប្រែប្រួលប្រហែល ១ ពិន្ទុដោយចៃដន្យ ដូច្នេះយើងមិនរាប់ភាពខុសគ្នាតូចជាងនេះទេ។</p></li>
+          <li><b>ពិន្ទុអ្នកស្ដាប់</b><p class="t-small">ការឱ្យពិន្ទុពី ១ ដល់ ៥ ដោយមិនដឹងថាជាម៉ូដែលណា លើប្រយោគចំនួន ២៥។ បច្ចុប្បន្នមានអ្នកវាយតម្លៃតែម្នាក់គត់ (អ្នកបង្កើត) ហើយយើងកំពុងស្វែងរកអ្នកស្ដាប់បន្ថែម។</p></li>
+          <li><b>ពាក្យអង់គ្លេសថ្មី</b><p class="t-small">ប្រយោគខ្មែរលាយពាក្យអង់គ្លេស ដែលម៉ូដែលមិនធ្លាប់ឃើញពេលហ្វឹកហាត់។ Gemini អានអត្ថបទដើម ចំណែកម៉ូដែលផ្សេងទៀតប្រើកម្មវិធីបំប្លែងលេខរបស់យើង។</p></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="how">
+    <div class="wrap">
+      <header class="sec-head grid">
+        <p class="sec-tag t-label rv">(០៣) របៀបដំណើរការ</p>
+        <h2 class="t-h2 mask"><span class="in-mask">គ្រូធំ<br>បង្រៀនសិស្សតូច</span></h2>
+        <p class="t-body rv">ម៉ូដែលធំៗនិយាយខ្មែរបានល្អ ប៉ុន្តែយឺត ហើយត្រូវការ GPU។ យើងប្រើម៉ូដែលធំធ្វើជាគ្រូ ដើម្បីបង្រៀនម៉ូដែលតូចមួយ ដែលដំណើរការលឿនលើកុំព្យូទ័រធម្មតា។</p>
+      </header>
+      <ol class="steps grid">
+        <li class="step rv">
+          <div class="viz viz-read"><p lang="km">ខ្ញុំរីករាយណាស់ដែលបានជួបអ្នក។</p><span class="viz-arrow"></span><div class="viz-wave"><i style="height:22%"></i><i style="height:48%"></i><i style="height:70%"></i><i style="height:36%"></i><i style="height:90%"></i><i style="height:58%"></i><i style="height:30%"></i><i style="height:76%"></i><i style="height:100%"></i><i style="height:52%"></i><i style="height:82%"></i><i style="height:40%"></i><i style="height:64%"></i><i style="height:28%"></i><i style="height:86%"></i><i style="height:46%"></i><i style="height:72%"></i><i style="height:34%"></i><i style="height:56%"></i><i style="height:20%"></i><i style="height:60%"></i><i style="height:88%"></i><i style="height:42%"></i><i style="height:68%"></i><i style="height:26%"></i></div></div>
+          <p class="fig"><b>9,042</b><span>ប្រយោគដែលគ្រូបានអាន</span></p>
+          <h3 class="t-h3">គ្រូអានប្រយោគរាប់ពាន់</h3>
+          <p class="t-small">VoxCPM2 (2 ពាន់លានប៉ារ៉ាម៉ែត្រ) អានប្រយោគនីមួយៗដោយសំឡេងតែមួយ។</p>
+        </li>
+        <li class="step rv" style="--dl:.1s">
+          <div class="viz viz-check"><div class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="out"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="out"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="out"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="out"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="out"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="out"></i><i></i><i></i><i></i><i></i><i></i></div><p class="viz-key"><i></i>មួយចំណុច = ១០០ ឃ្លីប<i class="out"></i>កាត់ចោល</p></div>
+          <p class="fig"><b>574</b><span>ឃ្លីបត្រូវបានកាត់ចោល</span></p>
+          <h3 class="t-h3">ពិនិត្យរាល់ឃ្លីប</h3>
+          <p class="t-small">ASR និងអ្នកស្ដាប់ជនជាតិខ្មែរ បានជម្រុះចេញនូវឃ្លីបណាដែលអានខុស សំឡេងប្លែក ឬលឿនពេក។ នៅសល់ ៨,៤៦៨ ឃ្លីប (៨.៥ ម៉ោង)។</p>
+        </li>
+        <li class="step rv" style="--dl:.2s">
+          <div class="viz viz-size"><div><span class="big"></span><small>គ្រូ · 2B</small></div><div><span class="small"></span><small>សិស្ស · 36M</small></div></div>
+          <p class="fig"><b>56×</b><span>តូចជាងគ្រូ</span></p>
+          <h3 class="t-h3">សិស្សរៀនពីគ្រូ</h3>
+          <p class="t-small">ម៉ូដែល 36 លានប៉ារ៉ាម៉ែត្រ រៀនតាមសំឡេងនោះ ហើយដំណើរការលឿនជាងពេលវេលាជាក់ស្ដែង លើ CPU ធម្មតា។</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="band" id="bench">
+    <div class="wrap grid">
+      <div class="band-head">
+        <p class="t-label rv">(០៤) KhmerTTS-Bench</p>
+        <h2 class="t-h2 mask" style="margin-top:18px"><span class="in-mask">រង្វាស់ស្តង់ដារបើកចំហ<br>សម្រាប់សំឡេងខ្មែរ</span></h2>
+        <p class="t-body rv">ប្រយោគ ៣២០ ត្រូវបានពិនិត្យដោយអ្នកនិយាយខ្មែរ៖ ខ្មែរសុទ្ធ ប្រយោគវែង ឈ្មោះ លេខ ខ្មែរលាយអង់គ្លេស និងអង់គ្លេស ព្រមទាំងកូដវាស់ដែលមិនប្រែប្រួល។ អ្នកណាក៏អាចវាស់ម៉ូដែលរបស់ខ្លួន និងប្រៀបធៀបដោយយុត្តិធម៌បានដែរ។</p>
+        <div class="band-act rv">
+          <a class="btn" href="https://huggingface.co/datasets/hengthegoat/khmertts-bench-v1"><span class="roll"><span>មើលនៅ Hugging Face</span><span aria-hidden="true">មើលនៅ Hugging Face</span></span><svg><use href="#arrow" /></svg></a>
+          <a class="btn ghost" href="https://github.com/tangheng05/samleng-tts#results">តារាងចំណាត់ថ្នាក់</a>
+        </div>
+      </div>
+      <div class="stats rv">
+        <div><b>320</b><span>ប្រយោគ ពិនិត្យដោយអ្នកនិយាយខ្មែរ</span></div>
+        <div><b>6</b><span>ប្រភេទប្រយោគ</span></div>
+        <div><b>9</b><span>ប្រព័ន្ធដែលបានវាស់</span></div>
+        <div><b>CC BY</b><span>ប្រើបានដោយសេរី</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="log">
+    <div class="wrap">
+      <header class="sec-head grid">
+        <p class="sec-tag t-label rv">(០៥) កំណត់ហេតុ</p>
+        <h2 class="t-h2 mask"><span class="in-mask">អ្វីដែលយើងបានសាកល្បង<br>រួមទាំងអ្វីដែលបរាជ័យ</span></h2>
+      </header>
+      <ol class="log">
+        <li class="now rv"><time>13 វិច្ឆិកា 2026</time><h3 class="t-h3">ការហ្វឹកហាត់ធំ</h3><p class="t-small">សំឡេងគ្រូ ៨.៥ ម៉ោង។ វាបានគាំងពីរដងដោយសារ GPU របស់ Mac អស់មេម៉ូរី។ យើងបានរកឃើញមូលហេតុ ជួសជុលវា និងបន្តដំណើរការពីចំណុចរក្សាទុករួចចុងក្រោយ។</p></li>
+        <li class="rv"><time>12 វិច្ឆិកា 2026</time><h3 class="t-h3">ពិន្ទុពីអ្នកស្ដាប់លើកដំបូង</h3><p class="t-small">ការឱ្យពិន្ទុដោយមិនដឹងឈ្មោះម៉ូដែល៖ ម៉ូដែលដើម 2.16 → Samleng v1 3.40។ ល្បឿននិយាយស្មើល្អ គឺឈ្នះទាំងការស្ដាប់ដោយត្រចៀក និងការវាស់ដោយតួលេខ។</p></li>
+        <li class="rv"><time>11 វិច្ឆិកា 2026</time><h3 class="t-h3">សំឡេងគ្រូថ្មី</h3><p class="t-small">យើងបានជ្រើសរើសសំឡេងសំយោគថ្មីមួយដែលច្បាស់ជាងមុន ហើយឱ្យគ្រូអានប្រយោគទាំងអស់ឡើងវិញ។</p></li>
+        <li class="rv"><time>10 វិច្ឆិកា 2026</time><h3 class="t-h3">បោះពុម្ព KhmerTTS-Bench</h3><p class="t-small">បានវាស់ម៉ូដែល TTS ខ្មែរបើកចំហទាំង ៧ និង Gemini ពីរកំណែ។ Gemini 3.8 ត្រឹមត្រូវបំផុត ប៉ុន្តែជាសេវាបង់ប្រាក់។</p></li>
+        <li class="rv"><time>09 វិច្ឆិកា 2026</time><h3 class="t-h3">សិស្សលើកទីមួយ</h3><p class="t-small">ហ្វឹកហាត់លើសំឡេងគ្រូត្រឹមតែ ១.២ ម៉ោង ប៉ុន្តែអត្រាកំហុសលើប្រយោគខ្មែរបានថយចុះប្រហែល ៤៣%។</p></li>
+        <li class="rv"><time>06 វិច្ឆិកា 2026</time><h3 class="t-h3">រង្វាស់អាចបំភាន់</h3><p class="t-small">ចំពោះប្រយោគខ្មែរលាយអង់គ្លេស អត្រាកំហុសធម្មតាគឺមិនស្របទៅនឹងអ្វីដែលមនុស្សស្ដាប់ឮនោះទេ។ យើងបានបង្កើតរង្វាស់ថ្មីមួយ និងផ្ទៀងផ្ទាត់វាជាមួយពិន្ទុពីអ្នកស្ដាប់។</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="end wrap" id="help">
+    <div class="end-panel rv">
+      <p class="t-label">(០៦) ចូលរួម</p>
+      <h2 class="t-h2">ជួយវាយតម្លៃសំឡេងខ្មែរ</h2>
+      <p class="t-body">មានតែអ្នកនិយាយភាសាខ្មែរទេ ទើបដឹងថាសំឡេងណាស្ដាប់ទៅដូចជាខ្មែរពិតប្រាកដ។ ចំណាយពេលប្រហែល ១៥ នាទីប៉ុណ្ណោះ៖ ស្ដាប់ឃ្លីបខ្លីៗ ហើយដាក់ពិន្ទុពី ១ ដល់ ៥។</p>
+      <a class="btn" href="#" data-todo="rater-signup"><span class="roll"><span>ខ្ញុំចង់ជួយ</span><span aria-hidden="true">ខ្ញុំចង់ជួយ</span></span><svg><use href="#arrow" /></svg></a>
+      <div class="end-wave" aria-hidden="true"><b style="height:40%;--d:0s"></b><b style="height:70%;--d:.3s"></b><b style="height:55%;--d:.6s"></b><b style="height:90%;--d:.2s"></b><b style="height:60%;--d:.5s"></b><b style="height:35%;--d:.8s"></b><b style="height:75%;--d:.1s"></b><b style="height:100%;--d:.4s"></b><b style="height:50%;--d:.7s"></b><b style="height:80%;--d:.25s"></b><b style="height:45%;--d:.55s"></b><b style="height:65%;--d:.15s"></b><b style="height:30%;--d:.45s"></b></div>
+    </div>
+  </section>
+</main>
+
+<footer class="ft wrap">
+  <div class="ft-top">
+    <a class="brand" href="#top"><svg class="mark"><use href="#mark" /></svg>Samleng</a>
+    <nav>
+      <a class="u" href="https://github.com/tangheng05/samleng-tts">GitHub</a>
+      <a class="u" href="https://huggingface.co/datasets/hengthegoat/khmertts-bench-v1">Hugging Face</a>
+      <a class="u" lang="en" href="/en">English</a>
+    </nav>
+    <span class="t-small">© 2026 Tang Heng · កូដ MIT</span>
+  </div>
+  <p class="ft-credit">ផ្អែកលើ <a class="u" href="https://huggingface.co/sengtha/khmer-tts-female-v2">sengtha/khmer-tts-female-v2</a> (CC BY-SA 4.0, ហ្វឹកហាត់លើទិន្នន័យ DDD-Cambodia) · គ្រូ <a class="u" href="https://huggingface.co/openbmb/VoxCPM2">VoxCPM2</a> (Apache-2.0) · ASR <a class="u" href="https://huggingface.co/seanghay/Qwen3-ASR-0.6B-Khmer">Qwen3-ASR-Khmer</a> (Apache-2.0)</p>
+</footer>
+
+<script src="/site.js" defer></script>
+</body>
+</html>

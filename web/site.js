@@ -1,0 +1,215 @@
+(() => {
+  const body = document.body;
+  const km = body.dataset.lang === "km";
+  const t = (p) => (km ? p.km : p.en);
+  const $ = (id) => document.getElementById(id);
+  const TZ = "Asia/Phnom_Penh";
+  const TEACHER_CER = 3.1;
+
+  // ---------- Theme ----------
+
+  const dark = matchMedia("(prefers-color-scheme: dark)");
+  let choice = null;
+  try { choice = localStorage.getItem("samleng-theme"); } catch (e) {}
+  const applyTheme = () => { body.dataset.theme = choice || (dark.matches ? "night" : "paper"); };
+  dark.addEventListener("change", applyTheme);
+  $("theme-btn").addEventListener("click", () => {
+    choice = body.dataset.theme === "night" ? "paper" : "night";
+    try { localStorage.setItem("samleng-theme", choice); } catch (e) {}
+    applyTheme();
+  });
+
+  // ---------- Reveal on scroll ----------
+
+  const reveal = new IntersectionObserver((entries) => {
+    entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("seen"); reveal.unobserve(e.target); } });
+  }, { rootMargin: "0px 0px -8% 0px" });
+  document.querySelectorAll(".rv, .mask, .results").forEach((el) => reveal.observe(el));
+
+  // ---------- 01 Listen ----------
+
+  const SYSTEMS = {
+    base: { name: { km: "ម៉ូដែលដើម", en: "Base model" }, sub: { km: "មុនពេលយើងហ្វឹកហាត់", en: "Before our training" } },
+    samleng: { name: { km: "Samleng v1", en: "Samleng v1" }, sub: { km: "36 លានប៉ារ៉ាម៉ែត្រ · ដំណើរការលើ CPU", en: "36M parameters · runs on a CPU" } },
+    teacher: { name: { km: "គ្រូ · VoxCPM2", en: "Teacher · VoxCPM2" }, sub: { km: "2 ពាន់លានប៉ារ៉ាម៉ែត្រ · ត្រូវការ GPU", en: "2B parameters · needs a GPU" } },
+  };
+  const SAMPLES = {
+    "pure-34": { title: { km: "សុភាសិតខ្មែរ", en: "A Khmer proverb" }, en: "“When the water rises, fish eat ants; when it falls, ants eat fish.”" },
+    "numbers-49": { title: { km: "ភាគរយ និងទសភាគ", en: "Percent and decimals" }, en: "“This loan charges 1.5% interest per month.”" },
+    "names-38": { title: { km: "ឈ្មោះទីកន្លែង", en: "Place names" }, en: "“Kratie is where you can see freshwater dolphins in the Mekong.”" },
+    "mixed-67": { title: { km: "ខ្មែរលាយអង់គ្លេស", en: "Khmer mixed with English" }, en: "“Please copy this link and paste it into the browser.”" },
+    "numbers-19": { title: { km: "ចំនួនធំ", en: "Large numbers" }, en: "“This company has 1,250 employees.”" },
+  };
+  const CATEGORY = {
+    pure: { km: "ខ្មែរសុទ្ធ", en: "Pure Khmer" }, numbers: { km: "លេខ", en: "Numbers" },
+    names: { km: "ឈ្មោះ", en: "Names" }, mixed: { km: "ខ្មែរ–អង់គ្លេស", en: "Khmer–English" },
+  };
+  const clock = (sec) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, "0")}`;
+  const ICONS = '<svg class="i-play" viewBox="0 0 16 16"><path d="M4 2.5v11l9.5-5.5z" fill="currentColor"/></svg><svg class="i-pause" viewBox="0 0 16 16"><path d="M4 2.5h3v11H4zm5 0h3v11H9z" fill="currentColor"/></svg>';
+  const SCORE = { km: "ពិន្ទុអ្នកស្ដាប់", en: "listener score" };
+
+  let audios = [];
+  const stopAll = () => audios.forEach((a) => { a.pause(); a.currentTime = 0; });
+
+  const showSample = (s, i) => {
+    stopAll();
+    document.querySelectorAll(".pick").forEach((b) => b.setAttribute("aria-pressed", b.dataset.i === String(i)));
+    $("say").textContent = s.text;
+    $("say-en").textContent = km ? "" : SAMPLES[s.id].en;
+    const players = $("players");
+    players.innerHTML = "";
+    const longest = Math.max(...Object.values(s.clips).map((c) => c.seconds));
+    audios = Object.entries(s.clips).map(([key, clip]) => {
+      const sys = SYSTEMS[key];
+      const row = document.createElement("div");
+      row.className = "player" + (key === "samleng" ? " ours" : "");
+      const bars = clip.peaks.map((v) => `<i style="height:${Math.max(6, v)}%"></i>`).join("");
+      row.innerHTML = `<button type="button" class="play" aria-label="${t(sys.name)}">${ICONS}</button>
+        <div class="who"><b>${t(sys.name)}</b><small>${t(sys.sub)}</small></div>
+        <div class="wave-box"><div class="wf" style="width:${(100 * clip.seconds) / longest}%">${bars}</div></div>
+        <span class="len num">${clock(clip.seconds)}</span>
+        <span class="score">${clip.score == null ? "" : `<b class="num">${clip.score}<small> / 5</small></b><small>${t(SCORE)}</small>`}</span>`;
+      const audio = new Audio(`/audio/${key}/${s.id}.m4a`);
+      audio.preload = "none";
+      solo(audio);
+      const wf = row.querySelector(".wf");
+      const cells = [...wf.children];
+      const paint = (frac) => cells.forEach((c, n) => c.classList.toggle("done", n < frac * cells.length));
+      audio.addEventListener("timeupdate", () => paint(audio.currentTime / (audio.duration || clip.seconds)));
+      audio.addEventListener("play", () => row.classList.add("on"));
+      audio.addEventListener("pause", () => row.classList.remove("on"));
+      audio.addEventListener("ended", () => { row.classList.remove("on"); paint(0); });
+      const start = () => {
+        audios.forEach((a) => { if (a !== audio) { a.pause(); a.currentTime = 0; } });
+        document.querySelectorAll(".wf i.done").forEach((c) => { if (c.parentNode !== wf) c.classList.remove("done"); });
+        audio.play();
+      };
+      row.querySelector(".play").addEventListener("click", () => (audio.paused ? start() : audio.pause()));
+      wf.addEventListener("click", (e) => {
+        const box = wf.getBoundingClientRect();
+        const frac = (e.clientX - box.left) / box.width;
+        const seek = () => { audio.currentTime = frac * audio.duration; };
+        if (audio.readyState > 0) seek(); else audio.addEventListener("loadedmetadata", seek, { once: true });
+        start();
+      });
+      players.appendChild(row);
+      return audio;
+    });
+  };
+
+  fetch("/data/samples.json").then((r) => r.json()).then((samples) => {
+    $("picks").innerHTML = samples.map((s, i) => `<li><button type="button" class="pick" data-i="${i}" aria-pressed="false">
+      <span class="t-h3">${t(SAMPLES[s.id].title)}</span><span class="meta">${t(CATEGORY[s.category])}</span><span class="bar"></span></button></li>`).join("");
+    document.querySelectorAll(".pick").forEach((b) => b.addEventListener("click", () => showSample(samples[b.dataset.i], b.dataset.i)));
+    showSample(samples[0], 0);
+    heroPlayer(samples[0]);
+  });
+
+  const everyAudio = new Set();
+  const solo = (audio) => {
+    everyAudio.add(audio);
+    audio.addEventListener("play", () => everyAudio.forEach((a) => { if (a !== audio) a.pause(); }));
+  };
+  const heroPlayer = (s) => {
+    const clip = s.clips.samleng, root = $("hp"), wf = $("hp-wf");
+    $("hp-say").textContent = s.text;
+    wf.innerHTML = clip.peaks.map((v) => `<i style="height:${Math.max(6, v)}%"></i>`).join("");
+    const cells = [...wf.children];
+    const audio = new Audio(`/audio/samleng/${s.id}.m4a`);
+    audio.preload = "none";
+    solo(audio);
+    const paint = (frac) => cells.forEach((c, n) => c.classList.toggle("done", n < frac * cells.length));
+    audio.addEventListener("timeupdate", () => paint(audio.currentTime / (audio.duration || clip.seconds)));
+    audio.addEventListener("play", () => root.classList.add("on"));
+    audio.addEventListener("pause", () => root.classList.remove("on"));
+    audio.addEventListener("ended", () => { root.classList.remove("on"); paint(0); });
+    root.querySelector(".play").addEventListener("click", () => (audio.paused ? audio.play() : audio.pause()));
+    wf.addEventListener("click", () => audio.play());
+  };
+
+  // ---------- Live training card ----------
+
+  const STATES = {
+    training: { km: "កំពុងហ្វឹកហាត់", en: "Training" },
+    paused: { km: "ផ្អាកដើម្បីជួសជុល", en: "Paused for a fix" },
+    idle: { km: "សម្រាករវាងការហ្វឹកហាត់", en: "Between runs" },
+    offline: { km: "គ្មានសញ្ញាថ្មី", en: "No recent signal" },
+  };
+  const RUNS = {
+    distill_v2_clear: {
+      km: "កំពុងបង្រៀនម៉ូដែលខ្នាតតូចឱ្យនិយាយសំឡេងថ្មីដែលច្បាស់ជាងមុន ពីសំឡេងគ្រូរយៈពេល ៨.៥ ម៉ោង។",
+      en: "Teaching the small model a new, clearer voice from 8.5 hours of teacher audio.",
+    },
+  };
+  const fmt = (n) => n.toLocaleString("en-US");
+  const ago = (iso) => {
+    const min = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
+    if (min < 1) return km ? "ទើបតែធ្វើបច្ចុប្បន្នភាព" : "Updated just now";
+    if (min < 60) return km ? `ធ្វើបច្ចុប្បន្នភាព ${min} នាទីមុន` : `Updated ${min} min ago`;
+    const h = Math.round(min / 60);
+    return km ? `ធ្វើបច្ចុប្បន្នភាព ${h} ម៉ោងមុន` : `Updated ${h} h ago`;
+  };
+  const finish = (iso) => {
+    const d = new Date(iso);
+    const day = (x) => x.toLocaleDateString("en-CA", { timeZone: TZ });
+    const time = d.toLocaleTimeString("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit" });
+    if (day(d) === day(new Date())) return time;
+    const tomorrow = new Date(Date.now() + 864e5);
+    if (day(d) === day(tomorrow)) return km ? `ស្អែក ${time}` : `Tomorrow ${time}`;
+    return d.toLocaleDateString(km ? "km-KH" : "en-GB", { timeZone: TZ, day: "numeric", month: "short" }) + " " + time;
+  };
+
+  const LABELS = { base: { km: "ម៉ូដែលដើម", en: "Base model" }, teacher: { km: "គ្រូ", en: "Teacher" }, step: { km: "ជំហាន", en: "step" } };
+  const drawEpochs = (s) => {
+    const box = $("epochs");
+    if (s.epoch == null) { box.innerHTML = ""; return; }
+    const part = Math.round((100 * s.step_in_epoch) / s.steps_per_epoch);
+    box.innerHTML = Array.from({ length: s.epochs }, (_, n) =>
+      n < s.epoch ? '<i class="done"></i>' : n === s.epoch ? `<i class="cur"><b style="height:${part}%"></b></i>` : "<i></i>").join("");
+  };
+  const drawGauge = (s) => {
+    const box = $("gauge");
+    const last = s.scores[s.scores.length - 1];
+    const vals = s.scores.map((p) => p.all).concat(s.base.all ?? TEACHER_CER);
+    const hi = Math.max(...vals) + 1.5, lo = TEACHER_CER - 1.2;
+    const at = (v) => (100 * (hi - v)) / (hi - lo);
+    const ref = (v, cls, label) => `<span class="g-ref ${cls}" style="left:${at(v)}%"><i></i><b>${label}</b><small>${v.toFixed(1)}%</small></span>`;
+    box.innerHTML = (s.base.all != null ? ref(s.base.all, "base", t(LABELS.base)) : "") + ref(TEACHER_CER, "teacher", t(LABELS.teacher))
+      + s.scores.slice(0, -1).map((p) => `<span class="g-old" style="left:${at(p.all)}%"></span>`).join("")
+      + (last ? `<span class="g-now" style="left:${at(last.all)}%"><b>${last.all.toFixed(1)}%</b><small>${t(LABELS.step)} ${fmt(last.step)}</small><i></i></span>` : "");
+  };
+
+  const put = (key, text) => document.querySelectorAll(`[data-live="${key}"]`).forEach((n) => { n.textContent = text; });
+  const renderLive = (s) => {
+    const stale = Date.now() - Date.parse(s.updated_at) > 20 * 60000;
+    const state = stale ? "offline" : s.state;
+    document.querySelectorAll(".state").forEach((n) => { n.dataset.s = state; });
+    put("state", t(STATES[state] || STATES.idle));
+    put("updated", ago(s.updated_at));
+    put("what", RUNS[s.run] ? t(RUNS[s.run]) : s.run || "");
+    if (s.step != null) {
+      put("step", fmt(s.step));
+      put("total", fmt(s.step + (s.steps_left || 0)));
+      document.querySelectorAll(".meter i").forEach((n) => { n.style.width = (100 * (s.progress || 0)).toFixed(1) + "%"; });
+      put("epoch", `${s.epoch + 1} / ${s.epochs}`);
+      put("speed", s.step_seconds ? `${s.step_seconds.toFixed(1)} s` : "–");
+      put("finish", s.finish_at && state === "training" ? finish(s.finish_at) : "–");
+    }
+    put("best", s.best ? `${s.best.all.toFixed(1)}%` : "–");
+    put("pct", s.progress != null ? Math.round(100 * s.progress) + "%" : "–");
+    drawEpochs(s);
+    drawGauge(s);
+  };
+
+  let last = null;
+  const load = () => fetch(body.dataset.status, { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+    .then((s) => { last = s; renderLive(s); })
+    .catch(() => { if (last) renderLive(last); });
+  load();
+  setInterval(load, 60000);
+
+  // ---------- Fonts ready: no layout jump ----------
+
+  document.fonts.ready.then(() => body.classList.add("ready"));
+})();
