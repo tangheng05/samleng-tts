@@ -163,7 +163,12 @@ svg { display: block; }
 @keyframes rise { from { transform: scaleY(.08); opacity: .2; } to { transform: none; opacity: 1; } }
 .run-machine { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--rule); font: 400 13.5px/1.6 var(--body); color: var(--fg-3); }
 .run-machine b { font: 650 14px/1.6 "Mona Sans", var(--body); color: var(--fg-2); font-variant-numeric: tabular-nums; }
-.measure > summary { display: none; }
+.measure { margin-top: 28px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.measure > summary { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; font: 600 16px/1.4 var(--body); color: var(--fg); cursor: pointer; list-style: none; }
+.measure > summary::-webkit-details-marker { display: none; }
+.measure > summary::after { content: "+"; font: 400 24px/1 "Mona Sans"; color: var(--fg-2); transition: transform .3s var(--ease); }
+.measure[open] > summary::after { transform: rotate(45deg); }
+.measure .notes-list { margin: 0 0 24px; }
 .log-more { display: none; }
 .updated { display: inline-flex; gap: 10px; transition: color .2s; }
 .updated u { text-decoration: none; color: var(--fg-2); border-bottom: 1px solid var(--rule); }

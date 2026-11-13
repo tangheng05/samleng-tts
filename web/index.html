@@ -97,7 +97,6 @@
       <header class="sec-head grid">
         <p class="sec-tag t-label rv">(01) Listen</p>
         <h2 class="t-h2 mask"><span class="in-mask">Same sentence,<br>three models</span></h2>
-        <p class="t-body rv">Pick a sentence and compare the base model, Samleng, and the teacher it learned from. These come from our test set, not hand-picked best cases. The score on the right is a blind listener rating from 1 to 5.</p>
       </header>
       <div class="listen grid">
         <ol class="picks rv" id="picks"></ol>
@@ -115,19 +114,18 @@
       <header class="sec-head grid">
         <p class="sec-tag t-label rv">(02) Results</p>
         <h2 class="t-h2 mask"><span class="in-mask">Measured by machine,<br>judged by Khmer ears</span></h2>
-        <p class="t-body rv">Every model reads the 300 Khmer sentences of KhmerTTS-Bench. A speech recognizer writes down what it hears, and we count the characters it gets wrong.</p>
       </header>
       <div class="results rv">
         <table class="rtable">
           <thead><tr><th>Model</th><th class="col-k">Khmer error rate</th><th>Unseen English words</th><th>Listener score (1–5)</th></tr></thead>
           <tbody>
-            <tr><td class="sys"><b>Base model</b><small>Before our training</small></td><td data-k="Khmer error rate"><div class="hbar"><b>10.4%</b><span><i style="--v:86.7"></i></span></div></td><td class="val" data-k="Unseen English words">36.7%</td><td class="val" data-k="Listener score">2.16</td></tr>
-            <tr class="ours"><td class="sys"><b>Samleng v1</b><small>Trained on 1.2 h of teacher audio · 36M</small></td><td data-k="Khmer error rate"><div class="hbar"><b>5.7%</b><span><i style="--v:47.5;--dl:.35s"></i></span></div></td><td class="val" data-k="Unseen English words">23.7%</td><td class="val" data-k="Listener score">3.40</td></tr>
-            <tr><td class="sys"><b>Teacher · VoxCPM2</b><small>2B parameters · needs a GPU</small></td><td data-k="Khmer error rate"><div class="hbar"><b>3.1%</b><span><i style="--v:25.8;--dl:.5s"></i></span></div></td><td class="val" data-k="Unseen English words">12.9%</td><td class="val" data-k="Listener score">3.72</td></tr>
-            <tr><td class="sys"><b>Gemini 3.8 TTS</b><small>Google's paid service</small></td><td data-k="Khmer error rate"><div class="hbar"><b>2.2%</b><span><i style="--v:18.3;--dl:.65s"></i></span></div></td><td class="val na" data-k="Unseen English words">–</td><td class="val" data-k="Listener score">3.68</td></tr>
+            <tr><td class="sys"><b>Base model</b></td><td data-k="Khmer error rate"><div class="hbar"><b>10.4%</b><span><i style="--v:86.7"></i></span></div></td><td class="val" data-k="Unseen English words">36.7%</td><td class="val" data-k="Listener score">2.16</td></tr>
+            <tr class="ours"><td class="sys"><b>Samleng v1</b></td><td data-k="Khmer error rate"><div class="hbar"><b>5.7%</b><span><i style="--v:47.5;--dl:.35s"></i></span></div></td><td class="val" data-k="Unseen English words">23.7%</td><td class="val" data-k="Listener score">3.40</td></tr>
+            <tr><td class="sys"><b>Teacher · VoxCPM2</b></td><td data-k="Khmer error rate"><div class="hbar"><b>3.1%</b><span><i style="--v:25.8;--dl:.5s"></i></span></div></td><td class="val" data-k="Unseen English words">12.9%</td><td class="val" data-k="Listener score">3.72</td></tr>
+            <tr><td class="sys"><b>Gemini 3.8 TTS</b></td><td data-k="Khmer error rate"><div class="hbar"><b>2.2%</b><span><i style="--v:18.3;--dl:.65s"></i></span></div></td><td class="val na" data-k="Unseen English words">–</td><td class="val" data-k="Listener score">3.68</td></tr>
           </tbody>
         </table>
-        <details class="measure" open><summary>How we measure</summary><ul class="notes-list">
+        <details class="measure"><summary>How we measure</summary><ul class="notes-list">
           <li><b>Error rate</b><p class="t-small">Median share of characters the recognizer gets wrong. Scores move about 1 point by chance, so smaller gaps are not reported as real.</p></li>
           <li><b>Listener score</b><p class="t-small">Blind 1–5 ratings of 25 sentences. So far there is one rater (the author); we are recruiting more native listeners.</p></li>
           <li><b>Unseen English words</b><p class="t-small">Khmer sentences with English words the model never saw in training. Gemini reads raw text; the other models use our number and date front end.</p></li>
@@ -141,7 +139,6 @@
       <header class="sec-head grid">
         <p class="sec-tag t-label rv">(03) How it works</p>
         <h2 class="t-h2 mask"><span class="in-mask">A big teacher,<br>a small student</span></h2>
-        <p class="t-body rv">Large models speak Khmer well, but they are slow and need a GPU. We use one as a teacher to train a small model that runs fast on an ordinary computer.</p>
       </header>
       <ol class="steps grid">
         <li class="step rv">
