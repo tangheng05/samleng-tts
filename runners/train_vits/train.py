@@ -70,6 +70,17 @@ def main() -> None:
     ap.add_argument("--batch-size", type=int, default=8)
     ap.add_argument("--lr", type=float, default=1e-4)
     ap.add_argument("--eval-clips", type=int, default=4)
+    # Each loader worker is a separate process with its own memory; on a 16 GB Mac, 8 train
+    # workers plus 4 eval workers got an eval worker killed at the end of the first epoch.
+    ap.add_argument(
+        "--workers", type=int, default=4, help="train data loader processes"
+    )
+    ap.add_argument(
+        "--eval-workers",
+        type=int,
+        default=0,
+        help="eval data loader processes (0 = load in the main process)",
+    )
     args = ap.parse_args()
 
     config = VitsConfig()
@@ -79,6 +90,8 @@ def main() -> None:
         config.load_json(hf_hub_download(REPO, "config.json", revision=REV))
         configure(config, args)
     config.epochs = args.epochs
+    config.num_loader_workers = args.workers
+    config.num_eval_loader_workers = args.eval_workers
     config.save_step = args.save_step
     # Checkpoints are ~1 GB each (optimizer state included).
     config.save_n_checkpoints = 3
