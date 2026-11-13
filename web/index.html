@@ -73,10 +73,14 @@
     </div>
 
     <aside class="run rv" style="--dl:.4s" aria-live="polite">
-      <div class="run-top"><span class="state" data-s="idle" data-live="state">Connecting…</span><span class="updated" data-live="updated"></span></div>
+      <div class="run-top"><span class="state" data-s="idle" data-live="state">Connecting…</span><a class="updated" href="https://gist.github.com/tangheng05/88470c558a887022f9c8f72951895528/revisions" target="_blank" rel="noopener" title="Every published update, timestamped by GitHub"><span data-live="updated"></span><u>Raw data ↗</u></a></div>
       <p class="run-pct"><b data-live="pct">–</b><span>of training done</span></p>
       <div class="epochs" id="epochs" role="img" aria-label="Epochs"></div>
       <p class="run-line"><span><small>Epoch</small> <b data-live="epoch">–</b></span><span><small>Step</small> <b data-live="step">–</b><i> / <span data-live="total">–</span></i></span><span><small>Ends</small> <b data-live="finish">–</b></span></p>
+      <div class="loss">
+        <div class="loss-head"><span>Training loss, live from the log</span><b data-live="loss">–</b></div>
+        <svg id="loss" aria-hidden="true"></svg>
+      </div>
       <div class="gauge">
         <div class="gauge-head"><p class="gauge-title">Error rate</p><p class="gauge-val"><b data-live="err">–</b> <small data-live="errstep"></small></p></div>
         <div class="gauge-track" id="gauge"></div>

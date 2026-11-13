@@ -309,6 +309,33 @@
     lastDot = target;
   };
 
+  const drawLoss = (s) => {
+    const svg = $("loss");
+    if (!svg) return;
+    const pts = s.loss || [];
+    put("loss", pts.length ? pts[pts.length - 1][1].toFixed(2) : "–");
+    const W = svg.clientWidth || 400, H = svg.clientHeight || 44;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = "";
+    if (pts.length < 2) return;
+    const ys = pts.map((p) => p[1]), lo = Math.min(...ys), hi = Math.max(...ys), span = hi - lo || 1;
+    const x = (i) => 2 + ((W - 8) * i) / (pts.length - 1);
+    const y = (v) => 4 + (H - 8) * (1 - (v - lo) / span);
+    const d = pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p[1]).toFixed(1)}`).join("");
+    const ns = "http://www.w3.org/2000/svg";
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", d); path.setAttribute("class", "loss-line");
+    svg.append(path);
+    const dot = document.createElementNS(ns, "circle");
+    dot.setAttribute("cx", x(pts.length - 1)); dot.setAttribute("cy", y(ys[ys.length - 1])); dot.setAttribute("r", 3.5); dot.setAttribute("class", "loss-dot");
+    svg.append(dot);
+    if (!calm && firstPaint) {
+      const len = path.getTotalLength();
+      path.style.strokeDasharray = len; path.style.strokeDashoffset = len;
+      requestAnimationFrame(() => requestAnimationFrame(() => { path.style.transition = "stroke-dashoffset 1.6s cubic-bezier(.2,.65,.3,.9) .4s"; path.style.strokeDashoffset = 0; }));
+    }
+  };
+
   const SVGNS = "http://www.w3.org/2000/svg";
   const el = (name, attrs, text) => {
     const n = document.createElementNS(SVGNS, name);
@@ -376,6 +403,7 @@
     } else put("pct", "–");
     drawEpochs(s);
     drawGauge(s);
+    drawLoss(s);
     drawHistory(s);
     firstPaint = false;
   };

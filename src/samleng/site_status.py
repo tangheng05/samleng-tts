@@ -13,6 +13,8 @@ ANSI = re.compile(r"\x1b\[[0-9;]*m")
 EPOCH = re.compile(r"EPOCH: (\d+)/(\d+)")
 STEP = re.compile(r"TIME: (\S+ \S+) -- STEP: (\d+)/(\d+) -- GLOBAL_STEP: (\d+)")
 STEP_TIME = re.compile(r"\| > step_time: ([\d.]+)")
+LOSS = re.compile(r"GLOBAL_STEP: (\d+)[^\n]*\n(?:[^\n]*\n)*?\s*\| > loss_mel: ([\d.]+)")
+LOSS_POINTS = 80
 CATEGORIES = ("pure", "numbers", "names", "long", "mixed_unseen")
 
 
@@ -33,7 +35,16 @@ def parse_train_log(text: str) -> dict | None:
         "step": int(step),
         "step_seconds": round(statistics.median(times), 2) if times else None,
         "logged_at": logged_at,
+        "loss": recent_loss(text),
     }
+
+
+def recent_loss(text: str) -> list[list[float]]:
+    """The last mel-spectrogram losses as [step, loss]; a resumed run's repeated steps keep their newest value."""
+    by_step = {
+        int(step): float(loss) for step, loss in LOSS.findall(ANSI.sub("", text))
+    }
+    return [[st, round(by_step[st], 3)] for st in sorted(by_step)[-LOSS_POINTS:]]
 
 
 def _medians(df: pd.DataFrame) -> dict:

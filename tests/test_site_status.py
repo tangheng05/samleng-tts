@@ -7,8 +7,10 @@ from samleng.site_status import build_status, parse_train_log, step_scores
 LOG = """\
 \x1b[4m\x1b[1m > EPOCH: 3/29\x1b[0m
 \x1b[1m   --> TIME: 2026-11-13 10:58:35 -- STEP: 299/598 -- GLOBAL_STEP: 2300\x1b[0m
+     | > loss_mel: 19.5  (19.0)
      | > step_time: 4.0  (3.2)
 \x1b[1m   --> TIME: 2026-11-13 11:00:10 -- STEP: 324/598 -- GLOBAL_STEP: 2325\x1b[0m
+     | > loss_mel: 18.25  (18.9)
      | > step_time: 2.0  (3.1)
 """
 
@@ -23,6 +25,7 @@ def test_parse_train_log_reads_latest_position():
         "step": 2325,
         "step_seconds": 3.0,
         "logged_at": "2026-11-13 11:00:10",
+        "loss": [[2300, 19.5], [2325, 18.25]],
     }
 
 
@@ -84,3 +87,14 @@ def test_build_status_without_training_has_no_finish():
     assert s["state"] == "idle"
     assert s["finish_at"] is None
     assert s["best"] is None
+
+
+def test_recent_loss_keeps_newest_value_of_a_repeated_step():
+    from samleng.site_status import recent_loss
+
+    log = (
+        "--> TIME: a b -- STEP: 1/9 -- GLOBAL_STEP: 100\n | > loss_mel: 30.0  (30)\n"
+        "--> TIME: a b -- STEP: 2/9 -- GLOBAL_STEP: 125\n | > loss_mel: 29.0  (29)\n"
+        "--> TIME: a b -- STEP: 1/9 -- GLOBAL_STEP: 100\n | > loss_mel: 28.0  (28)\n"
+    )
+    assert recent_loss(log) == [[100, 28.0], [125, 29.0]]
