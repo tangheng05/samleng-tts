@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,200..900&amp;family=Kantumruy+Pro:wght@300..700&amp;family=Koulen&amp;display=swap">
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body data-theme="paper" data-lang="en" data-status="/data/status.json">
+<body data-theme="paper" data-lang="en" data-status="https://gist.githubusercontent.com/tangheng05/88470c558a887022f9c8f72951895528/raw/status.json">
 <script>
   let saved = null;
   try { saved = localStorage.getItem("samleng-theme"); } catch (e) {}
@@ -91,7 +91,7 @@
       <header class="sec-head grid">
         <p class="sec-tag t-label rv">(01) Listen</p>
         <h2 class="t-h2 mask"><span class="in-mask">Same sentence,<br>three models</span></h2>
-        <p class="t-body rv">Pick a sentence and compare the base model, Samleng, and the teacher it learned from. These come from our test set, not hand-picked best cases.</p>
+        <p class="t-body rv">Pick a sentence and compare the base model, Samleng, and the teacher it learned from. These come from our test set, not hand-picked best cases. The score on the right is a blind listener rating from 1 to 5.</p>
       </header>
       <div class="listen grid">
         <ol class="picks rv" id="picks"></ol>
@@ -99,7 +99,6 @@
           <p class="say" id="say" lang="km"></p>
           <p class="say-en" id="say-en"></p>
           <div class="players" id="players"></div>
-          <p class="stage-note">These clips are from Samleng v1, the first training run. The version training above replaces them when it finishes.</p>
         </div>
       </div>
     </div>

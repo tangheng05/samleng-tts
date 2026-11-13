@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,200..900&amp;family=Kantumruy+Pro:wght@300..700&amp;family=Koulen&amp;display=swap">
   <link rel="stylesheet" href="/styles.css">
 </head>
-<body data-theme="paper" data-lang="km" data-status="/data/status.json">
+<body data-theme="paper" data-lang="km" data-status="https://gist.githubusercontent.com/tangheng05/88470c558a887022f9c8f72951895528/raw/status.json">
 <script>
   let saved = null;
   try { saved = localStorage.getItem("samleng-theme"); } catch (e) {}
@@ -90,8 +90,8 @@
     <div class="wrap">
       <header class="sec-head grid">
         <p class="sec-tag t-label rv">(០១) ស្ដាប់</p>
-        <h2 class="t-h2 mask"><span class="in-mask">ប្រយោគដូចគ្នា<br>ម៉ូដែលទាំងបី</span></h2>
-        <p class="t-body rv">ជ្រើសរើសប្រយោគមួយ ហើយប្រៀបធៀបម៉ូដែលដើម Samleng និងម៉ូដែលគ្រូដែលវាបានរៀនតាម។ ប្រយោគទាំងនេះគឺយកមកពីបញ្ជីវាស់របស់យើង មិនមែនរើសតែប្រយោគល្អៗនោះទេ។</p>
+        <h2 class="t-h2 mask" lang="en"><span class="in-mask">Same sentence,<br>three models</span></h2>
+        <p class="t-body rv">ជ្រើសរើសប្រយោគមួយ ហើយប្រៀបធៀបម៉ូដែលដើម Samleng និងម៉ូដែលគ្រូដែលវាបានរៀនតាម។ ប្រយោគទាំងនេះគឺយកមកពីបញ្ជីវាស់របស់យើង មិនមែនរើសតែប្រយោគល្អៗនោះទេ។ ពិន្ទុនៅខាងស្ដាំ គឺជាពិន្ទុអ្នកស្ដាប់ពី ១ ដល់ ៥។</p>
       </header>
       <div class="listen grid">
         <ol class="picks rv" id="picks"></ol>
@@ -99,7 +99,6 @@
           <p class="say" id="say" lang="km"></p>
           <p class="say-en" id="say-en"></p>
           <div class="players" id="players"></div>
-          <p class="stage-note">ឃ្លីបទាំងនេះមកពី Samleng v1 (ការហ្វឹកហាត់លើកទីមួយ)។ នៅពេលកំណែដែលកំពុងហ្វឹកហាត់ខាងលើបញ្ចប់ វានឹងមកជំនួសឃ្លីបទាំងនេះ។</p>
         </div>
       </div>
     </div>
@@ -109,7 +108,7 @@
     <div class="wrap">
       <header class="sec-head grid">
         <p class="sec-tag t-label rv">(០២) លទ្ធផល</p>
-        <h2 class="t-h2 mask"><span class="in-mask">វាស់ដោយម៉ាស៊ីន<br>ស្ដាប់ដោយត្រចៀកខ្មែរ</span></h2>
+        <h2 class="t-h2 mask" lang="en"><span class="in-mask">Measured by machine,<br>judged by Khmer ears</span></h2>
         <p class="t-body rv">ម៉ូដែលនីមួយៗអានប្រយោគខ្មែរចំនួន ៣០០ ក្នុង KhmerTTS-Bench។ កម្មវិធីស្គាល់សំឡេង (ASR) កត់ត្រាអ្វីដែលវាឮ ហើយយើងរាប់ចំនួនតួអក្សរដែលខុស។</p>
       </header>
       <div class="results rv">
@@ -135,7 +134,7 @@
     <div class="wrap">
       <header class="sec-head grid">
         <p class="sec-tag t-label rv">(០៣) របៀបដំណើរការ</p>
-        <h2 class="t-h2 mask"><span class="in-mask">គ្រូធំ<br>បង្រៀនសិស្សតូច</span></h2>
+        <h2 class="t-h2 mask" lang="en"><span class="in-mask">A big teacher,<br>a small student</span></h2>
         <p class="t-body rv">ម៉ូដែលធំៗនិយាយខ្មែរបានល្អ ប៉ុន្តែយឺត ហើយត្រូវការ GPU។ យើងប្រើម៉ូដែលធំធ្វើជាគ្រូ ដើម្បីបង្រៀនម៉ូដែលតូចមួយ ដែលដំណើរការលឿនលើកុំព្យូទ័រធម្មតា។</p>
       </header>
       <ol class="steps grid">
@@ -165,7 +164,7 @@
     <div class="wrap grid">
       <div class="band-head">
         <p class="t-label rv">(០៤) KhmerTTS-Bench</p>
-        <h2 class="t-h2 mask" style="margin-top:18px"><span class="in-mask">រង្វាស់ស្តង់ដារបើកចំហ<br>សម្រាប់សំឡេងខ្មែរ</span></h2>
+        <h2 class="t-h2 mask" style="margin-top:18px" lang="en"><span class="in-mask">An open yardstick<br>for Khmer speech</span></h2>
         <p class="t-body rv">ប្រយោគ ៣២០ ត្រូវបានពិនិត្យដោយអ្នកនិយាយខ្មែរ៖ ខ្មែរសុទ្ធ ប្រយោគវែង ឈ្មោះ លេខ ខ្មែរលាយអង់គ្លេស និងអង់គ្លេស ព្រមទាំងកូដវាស់ដែលមិនប្រែប្រួល។ អ្នកណាក៏អាចវាស់ម៉ូដែលរបស់ខ្លួន និងប្រៀបធៀបដោយយុត្តិធម៌បានដែរ។</p>
         <div class="band-act rv">
           <a class="btn" href="https://huggingface.co/datasets/hengthegoat/khmertts-bench-v1"><span class="roll"><span>មើលនៅ Hugging Face</span><span aria-hidden="true">មើលនៅ Hugging Face</span></span><svg><use href="#arrow" /></svg></a>
@@ -185,7 +184,7 @@
     <div class="wrap">
       <header class="sec-head grid">
         <p class="sec-tag t-label rv">(០៥) កំណត់ហេតុ</p>
-        <h2 class="t-h2 mask"><span class="in-mask">អ្វីដែលយើងបានសាកល្បង<br>រួមទាំងអ្វីដែលបរាជ័យ</span></h2>
+        <h2 class="t-h2 mask" lang="en"><span class="in-mask">What we tried,<br>including what failed</span></h2>
       </header>
       <ol class="log">
         <li class="now rv"><time>13 វិច្ឆិកា 2026</time><h3 class="t-h3">ការហ្វឹកហាត់ធំ</h3><p class="t-small">សំឡេងគ្រូ ៨.៥ ម៉ោង។ វាបានគាំងពីរដងដោយសារ GPU របស់ Mac អស់មេម៉ូរី។ យើងបានរកឃើញមូលហេតុ ជួសជុលវា និងបន្តដំណើរការពីចំណុចរក្សាទុករួចចុងក្រោយ។</p></li>
@@ -201,7 +200,7 @@
   <section class="end wrap" id="help">
     <div class="end-panel rv">
       <p class="t-label">(០៦) ចូលរួម</p>
-      <h2 class="t-h2">ជួយវាយតម្លៃសំឡេងខ្មែរ</h2>
+      <h2 class="t-h2" lang="en">Help rate Khmer voices</h2>
       <p class="t-body">មានតែអ្នកនិយាយភាសាខ្មែរទេ ទើបដឹងថាសំឡេងណាស្ដាប់ទៅដូចជាខ្មែរពិតប្រាកដ។ ចំណាយពេលប្រហែល ១៥ នាទីប៉ុណ្ណោះ៖ ស្ដាប់ឃ្លីបខ្លីៗ ហើយដាក់ពិន្ទុពី ១ ដល់ ៥។</p>
       <a class="btn" href="#" data-todo="rater-signup"><span class="roll"><span>ខ្ញុំចង់ជួយ</span><span aria-hidden="true">ខ្ញុំចង់ជួយ</span></span><svg><use href="#arrow" /></svg></a>
       <div class="end-wave" aria-hidden="true"><b style="height:40%;--d:0s"></b><b style="height:70%;--d:.3s"></b><b style="height:55%;--d:.6s"></b><b style="height:90%;--d:.2s"></b><b style="height:60%;--d:.5s"></b><b style="height:35%;--d:.8s"></b><b style="height:75%;--d:.1s"></b><b style="height:100%;--d:.4s"></b><b style="height:50%;--d:.7s"></b><b style="height:80%;--d:.25s"></b><b style="height:45%;--d:.55s"></b><b style="height:65%;--d:.15s"></b><b style="height:30%;--d:.45s"></b></div>

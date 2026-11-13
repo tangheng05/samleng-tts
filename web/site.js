@@ -65,10 +65,10 @@
       row.className = "player" + (key === "samleng" ? " ours" : "");
       const bars = clip.peaks.map((v) => `<i style="height:${Math.max(6, v)}%"></i>`).join("");
       row.innerHTML = `<button type="button" class="play" aria-label="${t(sys.name)}">${ICONS}</button>
-        <div class="who"><b>${t(sys.name)}</b><small>${t(sys.sub)}</small></div>
+        <div class="who"><b>${t(sys.name)}</b></div>
         <div class="wave-box"><div class="wf" style="width:${(100 * clip.seconds) / longest}%">${bars}</div></div>
         <span class="len num">${clock(clip.seconds)}</span>
-        <span class="score">${clip.score == null ? "" : `<b class="num">${clip.score}<small> / 5</small></b><small>${t(SCORE)}</small>`}</span>`;
+        <span class="score">${clip.score == null ? "" : `<b class="num" title="${t(SCORE)}">${clip.score}<small> / 5</small></b>`}</span>`;
       const audio = new Audio(`/audio/${key}/${s.id}.m4a`);
       audio.preload = "none";
       solo(audio);
@@ -99,7 +99,7 @@
 
   fetch("/data/samples.json").then((r) => r.json()).then((samples) => {
     $("picks").innerHTML = samples.map((s, i) => `<li><button type="button" class="pick" data-i="${i}" aria-pressed="false">
-      <span class="t-h3">${t(SAMPLES[s.id].title)}</span><span class="meta">${t(CATEGORY[s.category])}</span><span class="bar"></span></button></li>`).join("");
+      <span class="t-h3">${t(SAMPLES[s.id].title)}</span><span class="bar"></span></button></li>`).join("");
     document.querySelectorAll(".pick").forEach((b) => b.addEventListener("click", () => showSample(samples[b.dataset.i], b.dataset.i)));
     showSample(samples[0], 0);
     heroPlayer(samples[0]);
@@ -207,7 +207,7 @@
     .then((s) => { last = s; renderLive(s); })
     .catch(() => { if (last) renderLive(last); });
   load();
-  setInterval(load, 60000);
+  setInterval(load, 120000);
 
   // ---------- Fonts ready: no layout jump ----------
 
