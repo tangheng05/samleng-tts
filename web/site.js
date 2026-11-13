@@ -265,12 +265,25 @@
   };
 
   const LABELS = { base: { km: "ម៉ូដែលដើម", en: "Base model" }, teacher: { km: "គ្រូ", en: "Teacher" }, step: { km: "ជំហាន", en: "step" } };
+  const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let firstPaint = true, lastDot = null, shownPct = 0;
+  const tween = (from, to, ms, step) => {
+    if (calm || from === to) { step(to); return; }
+    const t0 = performance.now();
+    const tick = (now) => {
+      const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+      step(from + (to - from) * e);
+      if (k < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
   const drawEpochs = (s) => {
     const box = $("epochs");
     if (s.epoch == null) { box.innerHTML = ""; return; }
     const part = Math.round((100 * s.step_in_epoch) / s.steps_per_epoch);
+    box.classList.toggle("intro", firstPaint && !calm);
     box.innerHTML = Array.from({ length: s.epochs }, (_, n) =>
-      n < s.epoch ? '<i class="done"></i>' : n === s.epoch ? `<i class="cur"><b style="height:${part}%"></b></i>` : "<i></i>").join("");
+      n < s.epoch ? `<i class="done" style="--n:${n}"></i>` : n === s.epoch ? `<i class="cur" style="--n:${n}"><b style="height:${part}%"></b></i>` : "<i></i>").join("");
   };
   const drawGauge = (s) => {
     const box = $("gauge");
@@ -278,10 +291,22 @@
     const vals = s.scores.map((p) => p.all).concat(s.base.all ?? TEACHER_CER);
     const hi = Math.max(...vals) + 1.5, lo = TEACHER_CER - 1.2;
     const at = (v) => (100 * (hi - v)) / (hi - lo);
-    const ref = (v, cls, label) => `<span class="g-ref ${cls}" style="left:${at(v)}%"><i></i><b>${label}</b><small>${v.toFixed(1)}%</small></span>`;
-    box.innerHTML = (s.base.all != null ? ref(s.base.all, "base", t(LABELS.base)) : "") + ref(TEACHER_CER, "teacher", t(LABELS.teacher))
+    const ref = (v, cls, label) => `<span class="g-ref ${cls}" style="left:${at(v)}%"><i></i><b>${label} <small>${v.toFixed(1)}%</small></b></span>`;
+    const start = lastDot ?? (s.base.all != null ? at(s.base.all) : 0);
+    box.innerHTML = `<span class="g-fill" style="width:${start}%"></span>`
+      + (s.base.all != null ? ref(s.base.all, "base", t(LABELS.base)) : "") + ref(TEACHER_CER, "teacher", t(LABELS.teacher))
       + s.scores.slice(0, -1).map((p) => `<span class="g-old" style="left:${at(p.all)}%"></span>`).join("")
-      + (last ? `<span class="g-now" style="left:${at(last.all)}%"><b>${last.all.toFixed(1)}%</b><small>${t(LABELS.step)} ${fmt(last.step)}</small><i></i></span>` : "");
+      + (last ? `<span class="g-now" style="left:${start}%"><i></i></span>` : "");
+    put("err", last ? `${last.all.toFixed(1)}%` : "–");
+    put("errstep", last ? (km ? `នៅជំហាន ${fmt(last.step)}` : `at step ${fmt(last.step)}`) : "");
+    if (!last) return;
+    const target = at(last.all);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const dot = box.querySelector(".g-now"), fill = box.querySelector(".g-fill");
+      if (dot) dot.style.left = target + "%";
+      if (fill) fill.style.width = target + "%";
+    }));
+    lastDot = target;
   };
 
   const SVGNS = "http://www.w3.org/2000/svg";
@@ -344,10 +369,15 @@
       put("finish", s.finish_at && state === "training" ? finish(s.finish_at) : "–");
     }
     put("best", s.best ? `${s.best.all.toFixed(1)}%` : "–");
-    put("pct", s.progress != null ? Math.round(100 * s.progress) + "%" : "–");
+    if (s.progress != null) {
+      const to = Math.round(100 * s.progress), from = firstPaint && !calm ? 0 : shownPct;
+      tween(from, to, firstPaint ? 1400 : 700, (v) => put("pct", Math.round(v) + "%"));
+      shownPct = to;
+    } else put("pct", "–");
     drawEpochs(s);
     drawGauge(s);
     drawHistory(s);
+    firstPaint = false;
   };
 
   let last = null;

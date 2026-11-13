@@ -154,32 +154,35 @@ svg { display: block; }
 .epochs i.done { background: var(--accent); }
 .epochs i.cur b { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); animation: glow 1.8s var(--ease-io) infinite alternate; }
 @keyframes glow { from { opacity: .55; } to { opacity: 1; } }
-.run-line { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; margin-top: 14px; font: 400 15px/1.5 var(--body); color: var(--fg-2); }
-.run-line b { font: 650 15.5px/1.5 "Mona Sans", var(--body); color: var(--fg); font-variant-numeric: tabular-nums; }
-.run-line small { font: inherit; color: inherit; }
-.run-line i { font-style: normal; }
+.run-line { display: grid; grid-template-columns: repeat(3, auto); justify-content: space-between; gap: 16px; margin-top: 18px; }
+.run-line span { display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 5px; row-gap: 4px; }
+.run-line small { grid-column: 1 / -1; font: 400 13.5px/1.3 var(--body); color: var(--fg-2); }
+.run-line b { font: 650 19px/1.2 "Mona Sans", var(--body); color: var(--fg); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.run-line i { display: none; }
+.epochs.intro i.done, .epochs.intro i.cur { animation: rise .7s var(--ease) both; animation-delay: calc(var(--n) * 38ms + .25s); transform-origin: bottom; }
+@keyframes rise { from { transform: scaleY(.08); opacity: .2; } to { transform: none; opacity: 1; } }
+.run-machine { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--rule); font: 400 13.5px/1.6 var(--body); color: var(--fg-3); }
+.run-machine b { font: 650 14px/1.6 "Mona Sans", var(--body); color: var(--fg-2); font-variant-numeric: tabular-nums; }
 .measure > summary { display: none; }
 .log-more { display: none; }
-
-.run-machine { margin-top: 12px; font: 400 15px/1.5 var(--body); color: var(--fg-2); }
-.run-machine b { font: 650 15.5px/1.5 "Mona Sans", var(--body); color: var(--fg); font-variant-numeric: tabular-nums; }
-.gauge { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--rule); }
+.gauge { margin-top: 30px; padding-top: 24px; border-top: 1px solid var(--rule); }
+.gauge-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .gauge-title { font: 600 16px/1.5 var(--body); color: var(--fg); }
-.gauge-track { position: relative; height: 4px; margin: 64px 0 58px; border-radius: 99px; background: linear-gradient(90deg, color-mix(in srgb, var(--fg) 16%, transparent), var(--live)); }
+.gauge-val b { font: 700 24px/1 "Mona Sans"; color: var(--fg); font-variant-numeric: tabular-nums; }
+.gauge-val small { font: 400 14px/1 var(--body); color: var(--fg-2); }
+.gauge-track { position: relative; height: 6px; margin: 26px 0 44px; border-radius: 99px; background: color-mix(in srgb, var(--fg) 10%, transparent); }
+.g-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 35%, transparent), var(--accent)); transition: width 1.6s var(--ease) .3s; }
 .g-ref { position: absolute; top: 0; width: 0; }
-.g-ref i { position: absolute; left: -1px; top: -6px; width: 2px; height: 16px; background: var(--fg-2); }
+.g-ref i { position: absolute; left: -1px; top: -6px; width: 2px; height: 18px; border-radius: 1px; background: var(--fg-2); }
 .g-ref.teacher i { background: var(--live); }
-.g-ref b, .g-ref small { position: absolute; top: 18px; left: 0; transform: translateX(-50%); white-space: nowrap; font: 600 14px/1.4 var(--body); color: var(--fg-2); }
-.g-ref small { top: 38px; font: 500 13.5px/1.4 "Mona Sans"; color: var(--fg-3); }
-.g-ref.teacher b { color: var(--live); }
-.g-ref.teacher b, .g-ref.teacher small { transform: translateX(-85%); }
-.g-old { position: absolute; top: -3px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 45%, var(--bg)); }
-.g-now { position: absolute; top: 0; width: 0; }
-.g-now i { position: absolute; left: -9px; top: -7px; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--bg); }
-.g-now b, .g-now small { position: absolute; left: 0; transform: translateX(-50%); white-space: nowrap; }
-.g-now b { bottom: 30px; font: 700 22px/1 "Mona Sans"; color: var(--fg); }
-.g-now small { bottom: 14px; font: 400 12.5px/1 var(--body); color: var(--fg-3); }
+.g-ref b { position: absolute; top: 20px; left: 0; transform: translateX(-50%); white-space: nowrap; font: 600 13.5px/1.4 var(--body); color: var(--fg-2); }
+.g-ref b small { font: 500 13px/1 "Mona Sans"; color: var(--fg-3); margin-left: 2px; }
+.g-ref.teacher b { color: var(--live); transform: translateX(-80%); }
+.g-old { position: absolute; top: -2px; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 45%, var(--bg)); }
+.g-now { position: absolute; top: 3px; width: 0; transition: left 1.6s var(--ease) .3s; }
+.g-now i { position: absolute; left: -10px; top: -10px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--bg), 0 0 0 5px color-mix(in srgb, var(--accent) 40%, transparent); }
 .gauge-note { font: 400 14px/1.6 var(--body); color: var(--fg-3); }
+
 
 .state { display: inline-flex; align-items: center; gap: 9px; font: 600 15px/1.4 var(--body); color: var(--c, var(--fg-2)); letter-spacing: 0; text-transform: none; }
 .state::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
@@ -365,7 +368,7 @@ tr.ours .hbar span i { background: var(--accent); }
 .end-wave b { width: 10px; border-radius: 5px 5px 0 0; background: currentColor; animation: breathe 2.6s var(--ease-io) infinite alternate; animation-delay: var(--d); }
 @keyframes breathe { from { transform: scaleY(.5); } to { transform: scaleY(1); } }
 .end-wave b { transform-origin: bottom; }
-@media (prefers-reduced-motion: reduce) { .end-wave b, .state::before, .epochs i.cur b, .log li.now time::before { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .g-now, .g-fill { transition: none; } .end-wave b, .state::before, .epochs i.cur b, .log li.now time::before { animation: none; } }
 
 .ft { margin-top: clamp(72px, 8vw, 120px); }
 .ft-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px 32px; padding: 22px 0; border-top: 1px solid var(--rule); }
