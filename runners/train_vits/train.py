@@ -12,6 +12,7 @@ import argparse
 import json
 from pathlib import Path
 
+import torch
 from huggingface_hub import hf_hub_download
 from trainer import Trainer, TrainerArgs
 from TTS.tts.configs.shared_configs import BaseDatasetConfig
@@ -29,6 +30,19 @@ class DeviceAwareTrainer(Trainer):
     def get_eval_dataloader(self, samples, *, verbose=True):
         loader = super().get_eval_dataloader(samples, verbose=verbose)
         return self.prepare_accelerate_loader(loader)
+
+    def save_checkpoint(self) -> None:
+        super().save_checkpoint()
+        torch.cuda.empty_cache()
+
+    def train_step(self, *args, **kwargs):
+        out = super().train_step(*args, **kwargs)
+        if torch.backends.mps.is_available() and self.total_steps_done % 25 == 0:
+            # Batches grow from short to long clips; the cache reached 15.8 GB by the end of an epoch.
+            torch.mps.empty_cache()
+            gb = torch.mps.driver_allocated_memory() / 1e9
+            print(f"     | > mps_gb: {gb:.1f}", flush=True)
+        return out
 
 
 def manifest_formatter(limit: int | None):
@@ -114,6 +128,9 @@ def main() -> None:
         targs = TrainerArgs(restore_path=start)
     # The trainer only knows CUDA; Accelerate is its route to Apple's GPU.
     targs.use_accelerate = args.device == "mps"
+    if args.device == "mps":
+        # Its cache frees after eval and each epoch are CUDA-only; without them MPS ran out of memory.
+        torch.cuda.empty_cache = torch.mps.empty_cache
     out = str(args.continue_run or args.out_dir)
     trainer = DeviceAwareTrainer(
         targs, config, out, model=model, train_samples=train, eval_samples=evals
