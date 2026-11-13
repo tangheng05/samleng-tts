@@ -179,6 +179,49 @@
       + (last ? `<span class="g-now" style="left:${at(last.all)}%"><b>${last.all.toFixed(1)}%</b><small>${t(LABELS.step)} ${fmt(last.step)}</small><i></i></span>` : "");
   };
 
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const el = (name, attrs, text) => {
+    const n = document.createElementNS(SVGNS, name);
+    Object.entries(attrs).forEach(([k, v]) => n.setAttribute(k, v));
+    if (text != null) n.textContent = text;
+    return n;
+  };
+  const drawHistory = (s) => {
+    const svg = $("history");
+    const W = svg.clientWidth || 900, H = 340, L = 48, R = 16, T = 28, B = 44;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = "";
+    const total = (s.step || 0) + (s.steps_left || 0) || 1;
+    const vals = s.scores.map((p) => p.all).concat(s.base.all ?? 0);
+    const top = Math.max(12, Math.ceil((Math.max(...vals) + 1.5) / 4) * 4);
+    const x = (step) => L + ((W - L - R) * step) / total;
+    const y = (v) => T + ((H - T - B) * (top - v)) / top;
+    for (let v = 0; v <= top; v += 4) {
+      svg.append(el("line", { class: "h-grid", x1: L, x2: W - R, y1: y(v), y2: y(v) }));
+      svg.append(el("text", { class: "h-tick", x: L - 10, y: y(v) + 5, "text-anchor": "end" }, v + "%"));
+    }
+    const fracs = W < 560 ? [0, 0.5, 1] : [0, 0.25, 0.5, 0.75, 1];
+    fracs.forEach((f) => {
+      const st = Math.round((total * f) / 1000) * 1000;
+      const label = f === 1 ? `${fmt(total)} ${km ? "ជំហាន" : "steps"}` : fmt(st);
+      svg.append(el("text", { class: "h-tick", x: x(f === 1 ? total : st), y: H - 14, "text-anchor": f === 0 ? "start" : f === 1 ? "end" : "middle" }, label));
+    });
+    const ref = (v, cls, label) => {
+      svg.append(el("line", { class: `h-ref ${cls}`, x1: L, x2: W - R, y1: y(v), y2: y(v) }));
+      svg.append(el("text", { class: `h-ref-label ${cls}`, x: W - R, y: y(v) - 9, "text-anchor": "end" }, `${label} ${v.toFixed(1)}%`));
+    };
+    if (s.base.all != null) ref(s.base.all, "base", t(LABELS.base));
+    ref(TEACHER_CER, "teacher", t(LABELS.teacher));
+    if (s.step) svg.append(el("line", { class: "h-now", x1: x(s.step), x2: x(s.step), y1: T, y2: H - B }));
+    if (!s.scores.length) return;
+    const pts = s.scores.map((p) => [x(p.step), y(p.all)]);
+    svg.append(el("polyline", { class: "h-line", points: pts.map((p) => p.join(",")).join(" ") }));
+    pts.forEach(([px, py], n) => {
+      svg.append(el("circle", { class: "h-pt", cx: px, cy: py, r: 6 }));
+      if (W >= 560 || n === pts.length - 1) svg.append(el("text", { class: "h-val", x: px, y: py + 28, "text-anchor": "middle" }, s.scores[n].all.toFixed(1) + "%"));
+    });
+  };
+
   const put = (key, text) => document.querySelectorAll(`[data-live="${key}"]`).forEach((n) => { n.textContent = text; });
   const renderLive = (s) => {
     const stale = Date.now() - Date.parse(s.updated_at) > 20 * 60000;
@@ -199,6 +242,7 @@
     put("pct", s.progress != null ? Math.round(100 * s.progress) + "%" : "–");
     drawEpochs(s);
     drawGauge(s);
+    drawHistory(s);
   };
 
   let last = null;
@@ -206,6 +250,7 @@
     .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
     .then((s) => { last = s; renderLive(s); })
     .catch(() => { if (last) renderLive(last); });
+  addEventListener("resize", () => { if (last) drawHistory(last); });
   load();
   setInterval(load, 120000);
 

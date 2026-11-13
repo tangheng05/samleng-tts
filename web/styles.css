@@ -149,6 +149,8 @@ svg { display: block; }
 @keyframes glow { from { opacity: .55; } to { opacity: 1; } }
 .run-line { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; margin-top: 14px; font: 400 15px/1.5 var(--body); color: var(--fg-2); }
 .run-line b { font: 650 15.5px/1.5 "Mona Sans", var(--body); color: var(--fg); font-variant-numeric: tabular-nums; }
+.run-machine { margin-top: 12px; font: 400 15px/1.5 var(--body); color: var(--fg-2); }
+.run-machine b { font: 650 15.5px/1.5 "Mona Sans", var(--body); color: var(--fg); font-variant-numeric: tabular-nums; }
 .gauge { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--rule); }
 .gauge-title { font: 600 16px/1.5 var(--body); color: var(--fg); }
 .gauge-track { position: relative; height: 4px; margin: 64px 0 58px; border-radius: 99px; background: linear-gradient(90deg, color-mix(in srgb, var(--fg) 16%, transparent), var(--live)); }
@@ -308,6 +310,24 @@ tr.ours .hbar span i { background: var(--accent); }
 
 /* ---------- 05 Lab log ---------- */
 
+.history { margin-bottom: clamp(40px, 5vw, 64px); padding: clamp(20px, 2.6vw, 36px); border-radius: 20px; background: var(--card); box-shadow: 0 0 0 1px var(--rule); }
+.history-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 20px; }
+.history-title { font: 600 20px/1.4 var(--body); color: var(--fg); }
+.history-sub { display: inline-flex; align-items: center; gap: 8px; font: 500 15px/1.4 var(--body); color: var(--fg-2); }
+.history-sub::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--live); }
+.history svg { display: block; width: 100%; height: 340px; margin-top: 14px; overflow: visible; }
+.h-grid { stroke: var(--rule); stroke-width: 1; }
+.h-tick { fill: var(--fg-2); font: 500 14px "Mona Sans", "Kantumruy Pro", sans-serif; }
+.h-ref { stroke-width: 2; stroke-dasharray: 7 7; fill: none; }
+.h-ref.base { stroke: var(--fg-2); }
+.h-ref.teacher { stroke: var(--live); }
+.h-ref-label { font: 600 15px "Mona Sans", "Kantumruy Pro", sans-serif; }
+.h-ref-label.base { fill: var(--fg-2); }
+.h-ref-label.teacher { fill: var(--live); }
+.h-now { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 5; opacity: .6; }
+.h-line { fill: none; stroke: var(--accent); stroke-width: 3.5; stroke-linejoin: round; stroke-linecap: round; }
+.h-pt { fill: var(--accent); stroke: var(--card); stroke-width: 3; }
+.h-val { fill: var(--fg); font: 700 16px "Mona Sans", sans-serif; }
 .log { grid-column: 1 / -1; }
 .log li { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 4fr) minmax(0, 6fr); column-gap: var(--gap); padding: 22px 0; border-top: 1px solid var(--rule); }
 .log li:last-child { border-bottom: 1px solid var(--rule); }

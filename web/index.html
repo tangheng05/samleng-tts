@@ -76,6 +76,7 @@
       <p class="run-pct"><b data-live="pct">–</b><span>of training done</span></p>
       <div class="epochs" id="epochs" role="img" aria-label="Epochs"></div>
       <p class="run-line"><span>Epoch <b data-live="epoch">–</b></span><span>Step <b data-live="step">–</b> / <span data-live="total">–</span></span><span>Ends <b data-live="finish">–</b></span></p>
+      <p class="run-machine">Training on one Mac mini M4 (16 GB), no cloud GPU. <b data-live="speed">–</b> per step.</p>
       <div class="gauge">
         <p class="gauge-title">Error rate at the latest checkpoint</p>
         <div class="gauge-track" id="gauge"></div>
@@ -186,6 +187,10 @@
         <p class="sec-tag t-label rv">(05) Lab log</p>
         <h2 class="t-h2 mask"><span class="in-mask">What we tried,<br>including what failed</span></h2>
       </header>
+      <div class="history rv">
+        <div class="history-head"><p class="history-title">Error rate at each checkpoint</p><p class="history-sub">Live · lower is better</p></div>
+        <svg id="history" role="img" aria-label="Error rate by training step"></svg>
+      </div>
       <ol class="log">
         <li class="now rv"><time>13 Nov 2026</time><h3 class="t-h3">The big run</h3><p class="t-small">8.5 hours of teacher audio. It crashed twice because the Mac's GPU ran out of memory; we found the cause, fixed it, and resumed from the last checkpoint.</p></li>
         <li class="rv"><time>12 Nov 2026</time><h3 class="t-h3">First listener scores</h3><p class="t-small">Blind ratings: base model 2.16 → Samleng v1 3.40. Steady speaking pace won both by ear and by the numbers.</p></li>
