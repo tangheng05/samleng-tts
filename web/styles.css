@@ -520,4 +520,18 @@ tr.ours .hbar span i { background: var(--accent); }
   .gauge-track { margin: 22px 0 34px; }
   .loss { display: none; }
   .updated u { display: none; }
+
+  /* How it works: compact timeline */
+  .steps { row-gap: 0; }
+  .step { position: relative; padding: 0 0 30px 26px; border-top: 0; }
+  .step::after { content: ""; position: absolute; left: 4px; top: 6px; bottom: 0; width: 2px; background: var(--rule); }
+  .step:last-child { padding-bottom: 0; }
+  .step:last-child::after { display: none; }
+  .step::before { position: absolute; left: 0; top: 0; width: 10px; height: 10px; margin-top: 2px; border-radius: 50%; background: var(--accent); content: ""; font-size: 0; }
+  .step .viz { display: none; }
+  .fig { margin-top: 0; gap: 10px; }
+  .fig b { font-size: 40px; }
+  .fig span { font-size: 14.5px; }
+  .step .t-h3 { margin-top: 8px; font-size: 18px; }
+  .step .t-small { margin-top: 2px; font-size: 14.5px; }
 }
