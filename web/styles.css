@@ -126,6 +126,13 @@ svg { display: block; }
 .hero-h { color: var(--title); font: 700 clamp(40px, 5vw, 78px)/1.02 "Mona Sans", sans-serif; font-stretch: 85%; letter-spacing: -.025em; max-width: 13em; text-wrap: balance; }
 [data-lang="km"] .hero-h { font: 400 clamp(36px, 4.6vw, 72px)/1.45 "Koulen", sans-serif; letter-spacing: 0; }
 .hero-copy .t-body { max-width: 28em; margin-top: 24px; font-size: 19px; }
+.field { display: block; width: 100%; max-width: 640px; height: clamp(170px, 16vw, 240px); margin-top: 34px; margin-left: -2px; cursor: pointer; touch-action: pan-y; }
+@media (min-width: 721px) {
+  .hp { margin-top: 18px; }
+  .hp .play { width: 56px; height: 56px; }
+  .hp .wf { display: none; }
+  .hp-say { margin-top: 0; font-size: 16px; }
+}
 .hp { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; column-gap: 22px; max-width: 520px; margin-top: 44px; }
 .hp .play { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); transition: transform .3s var(--ease); }
 .hp .play:hover { transform: scale(1.06); }
@@ -484,4 +491,5 @@ tr.ours .hbar span i { background: var(--accent); }
   /* Lab log: latest three, then a button */
   .log:not(.all) li:nth-child(n+4) { display: none; }
   .log-more { display: flex; justify-content: center; align-items: center; width: 100%; height: 50px; margin-top: 16px; border-radius: 12px; box-shadow: inset 0 0 0 1.5px var(--rule); font: 600 15px/1 var(--body); color: var(--fg); }
+  .field { display: none; }
 }

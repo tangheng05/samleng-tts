@@ -103,6 +103,7 @@
     document.querySelectorAll(".pick").forEach((b) => b.addEventListener("click", () => showSample(samples[b.dataset.i], b.dataset.i)));
     showSample(samples[0], 0);
     heroPlayer(samples[0]);
+    startField();
   });
 
   const everyAudio = new Set();
@@ -110,6 +111,7 @@
     everyAudio.add(audio);
     audio.addEventListener("play", () => everyAudio.forEach((a) => { if (a !== audio) a.pause(); }));
   };
+  let heroAudio = null;
   const heroPlayer = (s) => {
     const clip = s.clips.samleng, root = $("hp"), wf = $("hp-wf");
     $("hp-say").textContent = s.text;
@@ -118,6 +120,7 @@
     const audio = new Audio(`/audio/samleng/${s.id}.m4a`);
     audio.preload = "none";
     solo(audio);
+    heroAudio = audio;
     const paint = (frac) => cells.forEach((c, n) => c.classList.toggle("done", n < frac * cells.length));
     audio.addEventListener("timeupdate", () => paint(audio.currentTime / (audio.duration || clip.seconds)));
     audio.addEventListener("play", () => root.classList.add("on"));
@@ -125,6 +128,108 @@
     audio.addEventListener("ended", () => { root.classList.remove("on"); paint(0); });
     root.querySelector(".play").addEventListener("click", () => (audio.paused ? audio.play() : audio.pause()));
     wf.addEventListener("click", () => audio.play());
+  };
+
+  // ---------- Voice field: the Khmer word as dots that react to the mouse and the voice ----------
+
+  const startField = async () => {
+    const field = $("field");
+    if (!field || getComputedStyle(field).display === "none") return;
+    try { await document.fonts.load('400 200px "Koulen"', "សំឡេង"); } catch (e) {}
+    const ctx = field.getContext("2d");
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const WORD = "សំឡេង";
+    let W = 0, H = 0, pts = [], xmin = 0, xmax = 1, colors = {};
+    let mouse = { x: -1e4, y: -1e4 }, level = 0, prog = 0, analyser = null, buf = null, running = true;
+
+    const readColors = () => {
+      const cs = getComputedStyle(body);
+      colors = { fg: cs.getPropertyValue("--fg").trim(), accent: cs.getPropertyValue("--accent").trim() };
+    };
+    const build = () => {
+      const dpr = Math.min(2, devicePixelRatio || 1);
+      W = field.clientWidth; H = field.clientHeight;
+      field.width = W * dpr; field.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const off = document.createElement("canvas");
+      off.width = W; off.height = H;
+      const o = off.getContext("2d");
+      let size = H * 0.74;
+      o.font = `400 ${size}px Koulen`;
+      const w0 = o.measureText(WORD).width;
+      if (w0 > W * 0.96) size *= (W * 0.96) / w0;
+      o.font = `400 ${size}px Koulen`;
+      const m = o.measureText(WORD);
+      const y = (H - (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent)) / 2 + m.actualBoundingBoxAscent;
+      o.fillText(WORD, m.actualBoundingBoxLeft + 2, y);
+      const data = o.getImageData(0, 0, W, H).data;
+      const step = W > 520 ? 5 : 4;
+      pts = [];
+      for (let yy = 0; yy < H; yy += step)
+        for (let xx = 0; xx < W; xx += step)
+          if (data[(yy * W + xx) * 4 + 3] > 140) pts.push({ hx: xx, hy: yy, x: xx, y: yy, vx: 0, vy: 0, j: Math.random() * 6.28 });
+      xmin = Math.min(...pts.map((p) => p.hx)); xmax = Math.max(...pts.map((p) => p.hx));
+      readColors();
+    };
+
+    const listen = () => {
+      if (analyser || !heroAudio) return;
+      try {
+        const ac = new (window.AudioContext || window.webkitAudioContext)();
+        const src = ac.createMediaElementSource(heroAudio);
+        analyser = ac.createAnalyser();
+        analyser.fftSize = 512;
+        buf = new Uint8Array(analyser.fftSize);
+        src.connect(analyser); analyser.connect(ac.destination);
+        heroAudio.addEventListener("play", () => ac.resume());
+      } catch (e) {}
+    };
+    if (heroAudio) heroAudio.addEventListener("play", listen);
+
+    field.addEventListener("pointermove", (e) => { const r = field.getBoundingClientRect(); mouse = { x: e.clientX - r.left, y: e.clientY - r.top }; });
+    field.addEventListener("pointerleave", () => { mouse = { x: -1e4, y: -1e4 }; });
+    field.addEventListener("click", () => { if (heroAudio) (heroAudio.paused ? heroAudio.play() : heroAudio.pause()); });
+
+    const R = 80, R2 = R * R;
+    const frame = (t) => {
+      if (!running) return;
+      let amp = 0;
+      if (analyser && heroAudio && !heroAudio.paused) {
+        analyser.getByteTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) { const v = (buf[i] - 128) / 128; sum += v * v; }
+        amp = Math.min(1, Math.sqrt(sum / buf.length) * 4);
+      }
+      level += (amp - level) * 0.25;
+      if (heroAudio) prog = heroAudio.ended || !heroAudio.duration ? (heroAudio.ended ? 0 : prog) : heroAudio.currentTime / heroAudio.duration;
+      const cut = xmin + prog * (xmax - xmin);
+      ctx.clearRect(0, 0, W, H);
+      const lit = new Path2D(), dim = new Path2D();
+      for (const p of pts) {
+        if (!still) {
+          const dx = p.x - mouse.x, dy = p.y - mouse.y, d2 = dx * dx + dy * dy;
+          if (d2 < R2) { const d = Math.sqrt(d2) || 1, f = (1 - d / R) * 2.6; p.vx += (dx / d) * f; p.vy += (dy / d) * f; }
+          const breath = Math.sin(t * 0.0016 + p.hx * 0.018) * 0.9;
+          const wob = level * 16 * Math.sin(p.hx * 0.05 + t * 0.014 + p.j);
+          p.vx += (p.hx - p.x) * 0.07; p.vy += (p.hy + breath + wob - p.y) * 0.07;
+          p.vx *= 0.8; p.vy *= 0.8; p.x += p.vx; p.y += p.vy;
+        }
+        const on = prog > 0 && p.hx <= cut;
+        const r = on ? 1.7 + level * 0.9 : 1.45;
+        const path = on ? lit : dim;
+        path.moveTo(p.x + r, p.y); path.arc(p.x, p.y, r, 0, 6.2832);
+      }
+      ctx.globalAlpha = 0.42; ctx.fillStyle = colors.fg; ctx.fill(dim);
+      ctx.globalAlpha = 1; ctx.fillStyle = colors.accent; ctx.fill(lit);
+      requestAnimationFrame(frame);
+    };
+
+    build();
+    new IntersectionObserver(([e]) => { const was = running; running = e.isIntersecting; if (running && !was) requestAnimationFrame(frame); }).observe(field);
+    new MutationObserver(readColors).observe(body, { attributes: true, attributeFilter: ["data-theme"] });
+    let rt;
+    addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (getComputedStyle(field).display !== "none") build(); }, 150); });
+    requestAnimationFrame(frame);
   };
 
   // ---------- Live training card ----------
