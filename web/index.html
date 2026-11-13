@@ -75,7 +75,7 @@
       <div class="run-top"><span class="state" data-s="idle" data-live="state">Connecting…</span><span class="updated" data-live="updated"></span></div>
       <p class="run-pct"><b data-live="pct">–</b><span>of training done</span></p>
       <div class="epochs" id="epochs" role="img" aria-label="Epochs"></div>
-      <p class="run-line"><span>Epoch <b data-live="epoch">–</b></span><span>Step <b data-live="step">–</b> / <span data-live="total">–</span></span><span>Ends <b data-live="finish">–</b></span></p>
+      <p class="run-line"><span><small>Epoch</small> <b data-live="epoch">–</b></span><span><small>Step</small> <b data-live="step">–</b><i> / <span data-live="total">–</span></i></span><span><small>Ends</small> <b data-live="finish">–</b></span></p>
       <p class="run-machine">Training on one Mac mini M4 (16 GB), no cloud GPU. <b data-live="speed">–</b> per step.</p>
       <div class="gauge">
         <p class="gauge-title">Error rate at the latest checkpoint</p>
@@ -122,11 +122,11 @@
             <tr><td class="sys"><b>Gemini 3.8 TTS</b><small>Google's paid service</small></td><td data-k="Khmer error rate"><div class="hbar"><b>2.2%</b><span><i style="--v:18.3;--dl:.65s"></i></span></div></td><td class="val na" data-k="Unseen English words">–</td><td class="val" data-k="Listener score">3.68</td></tr>
           </tbody>
         </table>
-        <ul class="notes-list">
+        <details class="measure" open><summary>How we measure</summary><ul class="notes-list">
           <li><b>Error rate</b><p class="t-small">Median share of characters the recognizer gets wrong. Scores move about 1 point by chance, so smaller gaps are not reported as real.</p></li>
           <li><b>Listener score</b><p class="t-small">Blind 1–5 ratings of 25 sentences. So far there is one rater (the author); we are recruiting more native listeners.</p></li>
           <li><b>Unseen English words</b><p class="t-small">Khmer sentences with English words the model never saw in training. Gemini reads raw text; the other models use our number and date front end.</p></li>
-        </ul>
+        </ul></details>
       </div>
     </div>
   </section>
@@ -199,6 +199,7 @@
         <li class="rv"><time>09 Nov 2026</time><h3 class="t-h3">The first student</h3><p class="t-small">Trained on just 1.2 hours of teacher audio, it made about 43% fewer errors on Khmer sentences.</p></li>
         <li class="rv"><time>06 Nov 2026</time><h3 class="t-h3">Metrics can mislead</h3><p class="t-small">On Khmer–English sentences, the plain error rate did not match what people hear. We built a new measure and checked it against listener scores.</p></li>
       </ol>
+      <button type="button" class="log-more" id="log-more">Show all entries</button>
     </div>
   </section>
 

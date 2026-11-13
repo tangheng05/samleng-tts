@@ -75,7 +75,7 @@
       <div class="run-top"><span class="state" data-s="idle" data-live="state">កំពុងភ្ជាប់…</span><span class="updated" data-live="updated"></span></div>
       <p class="run-pct"><b data-live="pct">–</b><span>នៃការហ្វឹកហាត់បានបញ្ចប់</span></p>
       <div class="epochs" id="epochs" role="img" aria-label="ជុំ"></div>
-      <p class="run-line"><span>ជុំ <b data-live="epoch">–</b></span><span>ជំហាន <b data-live="step">–</b> / <span data-live="total">–</span></span><span>ចប់ <b data-live="finish">–</b></span></p>
+      <p class="run-line"><span><small>ជុំ</small> <b data-live="epoch">–</b></span><span><small>ជំហាន</small> <b data-live="step">–</b><i> / <span data-live="total">–</span></i></span><span><small>ចប់</small> <b data-live="finish">–</b></span></p>
       <p class="run-machine">ហ្វឹកហាត់លើ Mac mini M4 (16 GB) តែមួយគ្រឿង ដោយមិនប្រើ cloud GPU។ <b data-live="speed">–</b> ក្នុងមួយជំហាន។</p>
       <div class="gauge">
         <p class="gauge-title">អត្រាកំហុស នៅចំណុចរក្សាទុកចុងក្រោយ</p>
@@ -122,11 +122,11 @@
             <tr><td class="sys"><b>Gemini 3.8 TTS</b><small>សេវាបង់ប្រាក់របស់ Google</small></td><td data-k="អត្រាកំហុស ខ្មែរ"><div class="hbar"><b>2.2%</b><span><i style="--v:18.3;--dl:.65s"></i></span></div></td><td class="val na" data-k="ពាក្យអង់គ្លេសថ្មី">–</td><td class="val" data-k="ពិន្ទុអ្នកស្ដាប់">3.68</td></tr>
           </tbody>
         </table>
-        <ul class="notes-list">
+        <details class="measure" open><summary>របៀបដែលយើងវាស់</summary><ul class="notes-list">
           <li><b>អត្រាកំហុស</b><p class="t-small">មេដ្យាន (median) នៃភាគរយតួអក្សរដែលប្រព័ន្ធស្គាល់សំឡេងសរសេរខុស។ ពិន្ទុអាចប្រែប្រួលប្រហែល ១ ពិន្ទុដោយចៃដន្យ ដូច្នេះយើងមិនរាប់ភាពខុសគ្នាតូចជាងនេះទេ។</p></li>
           <li><b>ពិន្ទុអ្នកស្ដាប់</b><p class="t-small">ការឱ្យពិន្ទុពី ១ ដល់ ៥ ដោយមិនដឹងថាជាម៉ូដែលណា លើប្រយោគចំនួន ២៥។ បច្ចុប្បន្នមានអ្នកវាយតម្លៃតែម្នាក់គត់ (អ្នកបង្កើត) ហើយយើងកំពុងស្វែងរកអ្នកស្ដាប់បន្ថែម។</p></li>
           <li><b>ពាក្យអង់គ្លេសថ្មី</b><p class="t-small">ប្រយោគខ្មែរលាយពាក្យអង់គ្លេស ដែលម៉ូដែលមិនធ្លាប់ឃើញពេលហ្វឹកហាត់។ Gemini អានអត្ថបទដើម ចំណែកម៉ូដែលផ្សេងទៀតប្រើកម្មវិធីបំប្លែងលេខរបស់យើង។</p></li>
-        </ul>
+        </ul></details>
       </div>
     </div>
   </section>
@@ -199,6 +199,7 @@
         <li class="rv"><time>09 វិច្ឆិកា 2026</time><h3 class="t-h3">សិស្សលើកទីមួយ</h3><p class="t-small">ហ្វឹកហាត់លើសំឡេងគ្រូត្រឹមតែ ១.២ ម៉ោង ប៉ុន្តែអត្រាកំហុសលើប្រយោគខ្មែរបានថយចុះប្រហែល ៤៣%។</p></li>
         <li class="rv"><time>06 វិច្ឆិកា 2026</time><h3 class="t-h3">រង្វាស់អាចបំភាន់</h3><p class="t-small">ចំពោះប្រយោគខ្មែរលាយអង់គ្លេស អត្រាកំហុសធម្មតាគឺមិនស្របទៅនឹងអ្វីដែលមនុស្សស្ដាប់ឮនោះទេ។ យើងបានបង្កើតរង្វាស់ថ្មីមួយ និងផ្ទៀងផ្ទាត់វាជាមួយពិន្ទុពីអ្នកស្ដាប់។</p></li>
       </ol>
+      <button type="button" class="log-more" id="log-more">បង្ហាញទាំងអស់</button>
     </div>
   </section>
 

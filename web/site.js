@@ -254,6 +254,14 @@
   load();
   setInterval(load, 120000);
 
+  // ---------- Phone: fold long parts ----------
+
+  const phone = matchMedia("(max-width: 720px)");
+  const measure = document.querySelector(".measure");
+  if (measure && phone.matches) measure.removeAttribute("open");
+  const more = $("log-more");
+  if (more) more.addEventListener("click", () => { document.querySelector(".log").classList.add("all"); more.remove(); });
+
   // ---------- Fonts ready: no layout jump ----------
 
   document.fonts.ready.then(() => body.classList.add("ready"));
