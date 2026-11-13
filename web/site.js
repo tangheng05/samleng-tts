@@ -188,7 +188,7 @@
   };
   const drawHistory = (s) => {
     const svg = $("history");
-    const W = svg.clientWidth || 900, H = 340, L = 48, R = 16, T = 28, B = 44;
+    const W = svg.clientWidth || 900, H = svg.clientHeight || 340, L = 48, R = 16, T = 28, B = 44;
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     svg.innerHTML = "";
     const total = (s.step || 0) + (s.steps_left || 0) || 1;
