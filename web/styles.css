@@ -204,6 +204,7 @@ svg { display: block; }
 .state[data-s="training"] { --c: var(--live); }
 .state[data-s="training"]::before { animation: pulse 1.8s var(--ease-io) infinite; }
 .state[data-s="paused"] { --c: var(--warn); }
+.state[data-s="testing"] { --c: var(--accent); }
 @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 55%, transparent); } 60% { box-shadow: 0 0 0 7px transparent; } }
 .updated { font: 400 14px/1.4 var(--body); color: var(--fg-3); }
 .meter { display: block; height: 6px; border-radius: 99px; background: color-mix(in srgb, var(--fg) 10%, transparent); overflow: hidden; }

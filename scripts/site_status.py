@@ -20,8 +20,11 @@ def queue_state(jobs: Path, log: Path) -> str:
     paused = jobs / "PAUSED"
     if paused.exists() and not paused.read_text().startswith("HOLD"):
         return "paused"
+    if not any((jobs / "running").glob("*.sh")):
+        return "idle"
     fresh = log.exists() and time.time() - log.stat().st_mtime < STALE_SECONDS
-    return "training" if any((jobs / "running").glob("*.sh")) and fresh else "idle"
+    # A queue job that is not writing the training log is scoring or recording.
+    return "training" if fresh else "testing"
 
 
 def main() -> None:

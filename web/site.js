@@ -236,6 +236,7 @@
 
   const STATES = {
     training: { km: "កំពុងហ្វឹកហាត់", en: "Training" },
+    testing: { km: "កំពុងតេស្តម៉ូដែល", en: "Testing the model" },
     paused: { km: "ផ្អាកដើម្បីជួសជុល", en: "Paused for a fix" },
     idle: { km: "សម្រាករវាងការហ្វឹកហាត់", en: "Between runs" },
     offline: { km: "គ្មានសញ្ញាថ្មី", en: "No recent signal" },
