@@ -16,6 +16,16 @@ STEP_TIME = re.compile(r"\| > step_time: ([\d.]+)")
 LOSS = re.compile(r"GLOBAL_STEP: (\d+)[^\n]*\n(?:[^\n]*\n)*?\s*\| > loss_mel: ([\d.]+)")
 LOSS_POINTS = 80
 CATEGORIES = ("pure", "numbers", "names", "long", "mixed_unseen")
+HEADER = re.compile(r"^# site-(\w+): *(.+?) *$", re.M)
+
+
+def job_info(script: str) -> dict:
+    """What a queue job tells the page, from `# site-<key>: value` lines in its script.
+
+    Keys: kind (training, testing, recording), en, km (one plain sentence each),
+    run (whose scores to show), progress (`<glob> <total>`: files done out of total).
+    """
+    return dict(HEADER.findall(script))
 
 
 def parse_train_log(text: str) -> dict | None:

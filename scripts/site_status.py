@@ -8,43 +8,73 @@ import json
 import time
 from pathlib import Path
 
-from samleng.paths import OUTPUT_DIR
-from samleng.site_status import base_scores, build_status, parse_train_log, step_scores
+from samleng.paths import OUTPUT_DIR, ROOT
+from samleng.site_status import (
+    base_scores,
+    build_status,
+    job_info,
+    parse_train_log,
+    step_scores,
+)
 
 EVAL = OUTPUT_DIR / "train" / "eval"
 # A log untouched this long means training is not running, whatever the queue says.
 STALE_SECONDS = 15 * 60
 
 
-def queue_state(jobs: Path, log: Path) -> str:
+def queue_state(jobs: Path, job: Path | None, info: dict, log: Path | None) -> str:
     paused = jobs / "PAUSED"
     if paused.exists() and not paused.read_text().startswith("HOLD"):
         return "paused"
-    if not any((jobs / "running").glob("*.sh")):
+    if job is None:
         return "idle"
-    fresh = log.exists() and time.time() - log.stat().st_mtime < STALE_SECONDS
-    # A queue job that is not writing the training log is scoring or recording.
-    return "training" if fresh else "testing"
+    live = log is not None and log.stem == job.stem
+    if live and time.time() - log.stat().st_mtime < STALE_SECONDS:
+        return "training"
+    return info.get("kind", "testing")
+
+
+def training_log(logs: Path) -> tuple[Path, dict] | tuple[None, None]:
+    """The newest queue log that is a training log, with its parsed position."""
+    for log in sorted(
+        logs.glob("*.log"), key=lambda p: p.stat().st_mtime, reverse=True
+    ):
+        text = log.read_text(errors="replace")
+        if "GLOBAL_STEP" in text and (pos := parse_train_log(text)):
+            return log, pos
+    return None, None
+
+
+def activity(job: Path, info: dict) -> dict:
+    out = {"job": job.stem, "en": info.get("en"), "km": info.get("km")}
+    if " " in info.get("progress", ""):
+        pattern, total = info["progress"].rsplit(" ", 1)
+        out |= {"done": len(list(ROOT.glob(pattern))), "total": int(total)}
+    return out
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--run", required=True, help="run name under outputs/train/")
     ap.add_argument(
-        "--log", type=Path, help="training log (default: the queue's 060 job log)"
+        "--run",
+        required=True,
+        help="run name under outputs/train/ unless the job names one",
     )
     ap.add_argument("--jobs", type=Path, default=Path.home() / "samleng-jobs")
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
-    log = args.log or args.jobs / "logs" / "060-train-clear.log"
-    pos = parse_train_log(log.read_text(errors="replace")) if log.exists() else None
+    job = next(iter(sorted((args.jobs / "running").glob("*.sh"))), None)
+    info = job_info(job.read_text(errors="replace")) if job else {}
+    log, pos = training_log(args.jobs / "logs")
+    run = info.get("run", args.run)
     status = build_status(
         pos,
-        scores=step_scores(EVAL / args.run),
+        scores=step_scores(EVAL / run),
         base=base_scores(EVAL / "base" / "results.csv"),
-        state=queue_state(args.jobs, log),
-        run=args.run,
+        state=queue_state(args.jobs, job, info, log),
+        run=run,
     )
+    status["activity"] = activity(job, info) if job else None
     args.out.parent.mkdir(parents=True, exist_ok=True)
     tmp = args.out.with_suffix(".tmp")
     tmp.write_text(json.dumps(status, ensure_ascii=False, indent=1), encoding="utf-8")

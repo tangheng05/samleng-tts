@@ -237,6 +237,7 @@
   const STATES = {
     training: { km: "កំពុងហ្វឹកហាត់", en: "Training" },
     testing: { km: "កំពុងតេស្តម៉ូដែល", en: "Testing the model" },
+    recording: { km: "កំពុងថតសំឡេងគ្រូ", en: "Recording teacher audio" },
     paused: { km: "ផ្អាកដើម្បីជួសជុល", en: "Paused for a fix" },
     idle: { km: "សម្រាករវាងការហ្វឹកហាត់", en: "Between runs" },
     offline: { km: "គ្មានសញ្ញាថ្មី", en: "No recent signal" },
@@ -387,6 +388,11 @@
     document.querySelectorAll(".state").forEach((n) => { n.dataset.s = state; });
     put("state", t(STATES[state] || STATES.idle));
     put("updated", ago(s.updated_at));
+    const a = !stale && s.activity, say = a && (km ? a.km || a.en : a.en);
+    document.querySelectorAll('[data-live="now"]').forEach((n) => {
+      n.hidden = !say;
+      n.textContent = say ? say + (a.total ? ` · ${fmt(a.done)} / ${fmt(a.total)}` : "") : "";
+    });
     put("what", RUNS[s.run] ? t(RUNS[s.run]) : s.run || "");
     if (s.step != null) {
       put("step", fmt(s.step));

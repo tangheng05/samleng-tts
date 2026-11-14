@@ -98,3 +98,15 @@ def test_recent_loss_keeps_newest_value_of_a_repeated_step():
         "--> TIME: a b -- STEP: 1/9 -- GLOBAL_STEP: 100\n | > loss_mel: 28.0  (28)\n"
     )
     assert recent_loss(log) == [[100, 28.0], [125, 29.0]]
+
+
+def test_job_info_reads_site_lines():
+    from samleng.site_status import job_info
+
+    script = "# Scores things.\n# site-kind: testing\n# site-en: Testing the model\n# site-progress: outputs/x/*/results.csv 17\nrun\n"
+    assert job_info(script) == {
+        "kind": "testing",
+        "en": "Testing the model",
+        "progress": "outputs/x/*/results.csv 17",
+    }
+    assert job_info("no headers") == {}

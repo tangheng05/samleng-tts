@@ -146,6 +146,7 @@ svg { display: block; }
 
 .run { grid-column: 8 / 13; padding-left: clamp(24px, 3vw, 48px); border-left: 1px solid var(--rule); }
 .run-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.run-now { margin-top: 14px; font: 400 15px/1.45 var(--body); color: var(--fg-2); }
 .run-pct { display: flex; align-items: baseline; gap: 14px; margin-top: 26px; }
 .run-pct b { font: 700 clamp(64px, 6.4vw, 104px)/.9 "Mona Sans"; font-stretch: 80%; letter-spacing: -.03em; color: var(--title); font-variant-numeric: tabular-nums; }
 .run-pct span { max-width: 9em; font: 500 17px/1.35 var(--body); color: var(--fg-2); }
