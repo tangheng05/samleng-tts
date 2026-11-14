@@ -110,3 +110,14 @@ def test_job_info_reads_site_lines():
         "progress": "outputs/x/*/results.csv 17",
     }
     assert job_info("no headers") == {}
+
+
+def test_is_run_log_matches_whole_run_name():
+    from samleng.site_status import is_run_log
+
+    log = "writing to ../../outputs/train/distill_v2_clear/run-1\n"
+    assert is_run_log(log, "distill_v2_clear")
+    assert not is_run_log(log, "distill_v2_core")
+    assert not is_run_log(
+        "outputs/train/distill_v2_clear_translit/x", "distill_v2_clear"
+    )

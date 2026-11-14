@@ -12,6 +12,7 @@ from samleng.paths import OUTPUT_DIR, ROOT
 from samleng.site_status import (
     base_scores,
     build_status,
+    is_run_log,
     job_info,
     parse_train_log,
     step_scores,
@@ -34,13 +35,17 @@ def queue_state(jobs: Path, job: Path | None, info: dict, log: Path | None) -> s
     return info.get("kind", "testing")
 
 
-def training_log(logs: Path) -> tuple[Path, dict] | tuple[None, None]:
-    """The newest queue log that is a training log, with its parsed position."""
+def training_log(logs: Path, run: str) -> tuple[Path, dict] | tuple[None, None]:
+    """The newest queue log that trains `run`, with its parsed position."""
     for log in sorted(
         logs.glob("*.log"), key=lambda p: p.stat().st_mtime, reverse=True
     ):
         text = log.read_text(errors="replace")
-        if "GLOBAL_STEP" in text and (pos := parse_train_log(text)):
+        if (
+            "GLOBAL_STEP" in text
+            and is_run_log(text, run)
+            and (pos := parse_train_log(text))
+        ):
             return log, pos
     return None, None
 
@@ -65,8 +70,8 @@ def main() -> None:
     args = ap.parse_args()
     job = next(iter(sorted((args.jobs / "running").glob("*.sh"))), None)
     info = job_info(job.read_text(errors="replace")) if job else {}
-    log, pos = training_log(args.jobs / "logs")
     run = info.get("run", args.run)
+    log, pos = training_log(args.jobs / "logs", run)
     status = build_status(
         pos,
         scores=step_scores(EVAL / run),

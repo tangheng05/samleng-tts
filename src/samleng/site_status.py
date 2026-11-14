@@ -28,6 +28,11 @@ def job_info(script: str) -> dict:
     return dict(HEADER.findall(script))
 
 
+def is_run_log(text: str, run: str) -> bool:
+    """True if a training log writes into outputs/train/<run> (not a run whose name merely starts the same)."""
+    return re.search(rf"outputs/train/{re.escape(run)}(?![\w-])", text) is not None
+
+
 def parse_train_log(text: str) -> dict | None:
     """Latest epoch and step of a Coqui training log, with the recent median seconds per step."""
     text = ANSI.sub("", text)

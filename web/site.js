@@ -350,7 +350,7 @@
     const W = svg.clientWidth || 900, H = svg.clientHeight || 340, L = 48, R = 16, T = 28, B = 44;
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     svg.innerHTML = "";
-    const total = (s.step || 0) + (s.steps_left || 0) || 1;
+    const total = Math.max((s.step || 0) + (s.steps_left || 0), ...s.scores.map((p) => p.step), 1);
     const vals = s.scores.map((p) => p.all).concat(s.base.all ?? 0);
     const top = Math.max(12, Math.ceil((Math.max(...vals) + 1.5) / 4) * 4);
     const x = (step) => L + ((W - L - R) * step) / total;
@@ -375,9 +375,13 @@
     if (!s.scores.length) return;
     const pts = s.scores.map((p) => [x(p.step), y(p.all)]);
     svg.append(el("polyline", { class: "h-line", points: pts.map((p) => p.join(",")).join(" ") }));
+    const refs = [TEACHER_CER, s.base.all].filter((v) => v != null).map(y);
+    const clear = (ty) => Math.min(...refs.map((r) => Math.abs(r - (ty - 6))));
     pts.forEach(([px, py], n) => {
       svg.append(el("circle", { class: "h-pt", cx: px, cy: py, r: 6 }));
-      if (W >= 560 || n === pts.length - 1) svg.append(el("text", { class: "h-val", x: px, y: py + 28, "text-anchor": "middle" }, s.scores[n].all.toFixed(1) + "%"));
+      const below = py + 28, above = py - 14, ty = py - 14 < T || clear(below) >= clear(above) ? below : above;
+      const anchor = px > W - R - 30 ? "end" : "middle";
+      if (W >= 560 || n === pts.length - 1) svg.append(el("text", { class: "h-val", x: px, y: ty, "text-anchor": anchor }, s.scores[n].all.toFixed(1) + "%"));
     });
   };
 
